@@ -36,7 +36,7 @@ dependencies:
   provider: ^6.1.2
   flutter_riverpod: ^2.5.1
   google_maps_flutter: ^2.6.0
-  flutter_local_notifications: ^16.3.2
+  flutter_local_notifications: ^19.2.1
   fl_chart: ^0.66.1
 
 
