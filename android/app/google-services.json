@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "476376317904",
+    "project_id": "fiap-farms",
+    "storage_bucket": "fiap-farms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476376317904:android:ec494e633b95f9560743d5",
+        "android_client_info": {
+          "package_name": "com.example.fiap_farms_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "476376317904-8t0lhqgld8ao0an2t8it2e073rhhgfkn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIfWHkf-OeegQ32HTONI1yvccYCQtwGUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "476376317904-8t0lhqgld8ao0an2t8it2e073rhhgfkn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
