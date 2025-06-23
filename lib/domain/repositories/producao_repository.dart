@@ -1,13 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../entities/producao.dart';
 
 abstract class ProducaoRepository {
-  Future<void> updateProducao(Producao producao);
-  Future<void> deleteProducao(String id);
+  Future<void> addProducao(Producao p);
+  Future<void> updateProducao(Producao antiga, Producao atualizada);
+  Future<void> deleteProducao(Producao p);
   Stream<List<Producao>> watchAllProducoes();
-
-  Future<int> consultarSaldoEstoque(String produtoId);
-  Future<void> registrarProducaoEstoque(Producao producao);
-  Future<DocumentReference> addProducaoRetornandoRef(Producao producao);
 }

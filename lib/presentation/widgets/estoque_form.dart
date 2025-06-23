@@ -50,7 +50,7 @@ class _EstoqueFormState extends ConsumerState<EstoqueForm> {
       produtoId: produto,
       safraId: safra,
       fazendaId: fazenda,
-      quantidade: double.tryParse(_qController.text) ?? 0,
+      quantidade: double.tryParse(_qController.text) ?? 0.0,
       tipo: tipo,
       observacao: _obsController.text.trim().isEmpty ? null : _obsController.text.trim(),
       data: widget.existing?.data ?? DateTime.now(), // preserva data na edição

@@ -1,137 +1,157 @@
+import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
+import 'package:fiap_farms_app/core/providers/producao_provider.dart';
+import 'package:fiap_farms_app/core/providers/product_provider.dart';
+import 'package:fiap_farms_app/core/providers/safra_provider.dart';
+import 'package:fiap_farms_app/domain/entities/producao.dart';
+import 'package:fiap_farms_app/presentation/widgets/producao_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/producao.dart';
-import '../../domain/entities/product.dart';
-import '../../domain/entities/fazenda.dart';
-import '../../domain/entities/safra.dart';
+class ProducaoPage extends ConsumerStatefulWidget {
+  const ProducaoPage({Key? key}) : super(key: key);
 
-import '../../core/providers/producao_provider.dart';
-import '../../core/providers/product_provider.dart';
-import '../../core/providers/fazenda_provider.dart';
-import '../../core/providers/safra_provider.dart';
+  @override
+  ConsumerState<ProducaoPage> createState() => _ProducaoPageState();
+}
 
-import '../widgets/producao_form.dart';
+class _ProducaoPageState extends ConsumerState<ProducaoPage> {
+  Producao? producaoEditando;
 
-class ProducaoPage extends ConsumerWidget {
-  const ProducaoPage({super.key});
-
-  void _abrirForm(BuildContext context, {Producao? producao}) {
+  void _abrirForm([Producao? p]) {
+    setState(() => producaoEditando = p);
     showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: SafeArea(
-          top: false,
-          child: ProducaoForm(existing: producao),
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: EdgeInsets.all(16),
+          child: ProducaoForm(producao: p), // <-- Envia a produção para edição
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  Future<void> _excluir(Producao p) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Excluir Produção'),
+        content: const Text('Confirma a exclusão desta produção?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Excluir')),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ref.read(producaoRepositoryProvider).deleteProducao(p);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Produção excluída com sucesso.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final producaoAsync = ref.watch(producaoListStreamProvider);
-    final produtosAsync = ref.watch(productListStreamProvider);
-    final fazendasAsync = ref.watch(fazendaListStreamProvider);
-    final safrasAsync = ref.watch(safraListStreamProvider);
-    final repo = ref.read(producaoRepositoryProvider);
+  Widget build(BuildContext context) {
+    final producoesAsync = ref.watch(producaoListStreamProvider);
+    final fazendaMapAsync = ref.watch(fazendaMapProvider);
+    final produtoMapAsync = ref.watch(produtoMapProvider);
+    final safraMapAsync = ref.watch(safraMapProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Produções')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirForm(context),
-        child: const Icon(Icons.add),
-      ),
-      body: producaoAsync.when(
+      appBar: AppBar(title: const Text('Produção')),
+      body: producoesAsync.when(
         data: (producoes) {
-          return produtosAsync.when(
-            data: (produtos) {
-              return fazendasAsync.when(
-                data: (fazendas) {
-                  return safrasAsync.when(
-                    data: (safras) {
+          return fazendaMapAsync.when(
+            data: (fazendaMap) {
+              return produtoMapAsync.when(
+                data: (produtoMap) {
+                  return safraMapAsync.when(
+                    data: (safraMap) {
                       if (producoes.isEmpty) {
-                        return const Center(child: Text("Nenhuma produção cadastrada."));
+                        return const Center(
+                            child: Text('Nenhuma produção cadastrada.'));
                       }
-
                       return ListView.builder(
                         itemCount: producoes.length,
-                        itemBuilder: (_, i) {
-                          final p = producoes[i];
-
-                          final produtoNome = produtos.firstWhere(
-                            (prod) => prod.id == p.produto,
-                            orElse: () => Product(id: p.produto, nome: 'Produto desconhecido'),
-                          ).nome;
-
-                          final fazendaNome = fazendas.firstWhere(
-                            (f) => f.id == p.fazenda,
-                            orElse: () => Fazenda(id: p.fazenda, nome: 'Fazenda desconhecida', estado: '', latitude: 0, longitude: 0),
-                          ).nome;
-
-                          final safraNome = safras.firstWhere(
-                            (s) => s.id == p.safra,
-                            orElse: () => Safra(id: p.safra, nome: 'Safra desconhecida', valor: ''),
-                          ).nome;
-
+                        itemBuilder: (context, index) {
+                          final p = producoes[index];
+                          final fazendaNome =
+                              fazendaMap[p.fazenda] ?? p.fazenda ?? 'N/A';
+                          final produtoNome =
+                              produtoMap[p.produto] ?? p.produto;
+                          final safraNome =
+                              safraMap[p.safra] ?? p.safra ?? 'N/A';
                           return ListTile(
-                            title: Text('Produto: $produtoNome | Quantidade: ${p.quantidade}'),
-                            subtitle: Text('Fazenda: $fazendaNome | Safra: $safraNome'),
+                            title: Text(produtoNome ?? p.produto),
+                            subtitle: Text(
+                              'Qtd: ${p.quantidade} | Safra: ${safraNome ?? '-'} | Fazenda: ${fazendaNome ?? '-'}\n'
+                              'Data: ${p.data.toLocal().toString().split(' ')[0]}',
+                            ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => _abrirForm(context, producao: p),
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.blue),
+                                  tooltip: 'Editar',
+                                  onPressed: () => _abrirForm(p),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => repo.deleteProducao(p.id),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.check_box_outlined, color: Colors.green),
-                                  tooltip: 'Registrar no estoque',
-                                  onPressed: () async {
-                                    await repo.registrarProducaoEstoque(p);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Produção registrada no estoque.")),
-                                      );
-                                    }
-                                  },
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  tooltip: 'Excluir',
+                                  onPressed: () => _excluir(p),
                                 ),
                               ],
                             ),
+
                           );
                         },
                       );
                     },
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Erro nas safras: $e')),
+                    error: (e, _) =>
+                        Center(child: Text('Erro ao carregar safras: $e')),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Erro nas fazendas: $e')),
+                error: (e, _) =>
+                    Center(child: Text('Erro ao carregar produtos: $e')),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Erro nos produtos: $e')),
+            error: (e, _) =>
+                Center(child: Text('Erro ao carregar fazendas: $e')),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Erro nas produções: $e')),
+        error: (e, _) => Center(child: Text('Erro: $e')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _abrirForm(),
+        child: const Icon(Icons.add),
+        tooltip: 'Adicionar Produção',
       ),
     );
   }

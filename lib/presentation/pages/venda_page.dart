@@ -1,193 +1,145 @@
-import 'package:fiap_farms_app/domain/entities/estoque.dart';
-import 'package:fiap_farms_app/domain/entities/fazenda.dart';
-import 'package:fiap_farms_app/domain/entities/product.dart';
+// ✅ Módulo: VENDAS - Página semelhante à produção, com exibição de dados, edição e exclusão
+
+import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
+import 'package:fiap_farms_app/core/providers/product_provider.dart';
+import 'package:fiap_farms_app/core/providers/safra_provider.dart';
+import 'package:fiap_farms_app/core/providers/venda_provider.dart';
+import 'package:fiap_farms_app/domain/entities/venda.dart';
+import 'package:fiap_farms_app/presentation/widgets/venda_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-import '../../core/providers/venda_provider.dart';
-import '../../core/providers/product_provider.dart';
-import '../../core/providers/fazenda_provider.dart';
-import '../../domain/entities/venda.dart';
-import '../widgets/venda_form.dart';
-import '../../core/providers/estoque_provider.dart';
 
-class VendaPage extends ConsumerStatefulWidget {
-  const VendaPage({Key? key}) : super(key: key);
+class VendaPage extends ConsumerWidget {
+  const VendaPage({super.key});
 
   @override
-  ConsumerState<VendaPage> createState() => _VendaPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vendasAsync = ref.watch(vendaListStreamProvider);
+    final produtoMapaAsync = ref.watch(produtoMapProvider);
+    final fazendaMapaAsync = ref.watch(fazendaMapProvider);
+    final safraMapaAsync = ref.watch(safraMapProvider);
 
-class _VendaPageState extends ConsumerState<VendaPage> {
-  Venda? vendaEditando;
-
-  void _abrirForm([Venda? venda]) {
-    setState(() {
-      vendaEditando = venda;
-    });
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    void _abrirFormulario([Venda? venda]) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: SafeArea(
-            top: false,
-            child: VendaForm(
-              existing: vendaEditando,
-              onSuccess: () {
-                Navigator.pop(context);
-                setState(() => vendaEditando = null);
-              },
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: SafeArea(
+              top: false,
+              child: VendaForm(
+                existing: venda,
+                onSuccess: () => Navigator.of(context).pop(),
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Future<void> _excluirVenda(Venda venda) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Excluir Venda'),
-        content: const Text('Tem certeza que deseja excluir esta venda? O estoque será reabastecido.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Excluir')),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final vendaRepo = ref.read(vendaRepositoryProvider);
-      final estoqueRepo = ref.read(estoqueRepositoryProvider);
-
-      await vendaRepo.excluirVenda(venda.id);
-
-      await estoqueRepo.adicionarEstoque(
-        Estoque(
-          id: const Uuid().v4(),
-          produtoId: venda.produtoId,
-          safraId: venda.safraId.isEmpty ? null : venda.safraId,
-          fazendaId: venda.fazendaId,
-          quantidade: venda.quantidade,
-          tipo: 'entrada',
-          observacao: 'Reabastecimento por exclusão da venda ID: ${venda.id}',
-          data: DateTime.now(),
-        ),
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Venda excluída com sucesso.')),
-        );
-        setState(() {});
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao excluir venda: $e')),
-        );
-      }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final vendasAsync = ref.watch(vendaListStreamProvider);
-    final produtosAsync = ref.watch(productListStreamProvider);
-    final fazendasAsync = ref.watch(fazendaListStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Vendas'),
-      ),
+      appBar: AppBar(title: const Text('Vendas')),
       body: vendasAsync.when(
         data: (vendas) {
-          if (vendas.isEmpty) return const Center(child: Text('Nenhuma venda cadastrada'));
-
-          // Evita duplicatas pelo ID, se necessário:
-          final uniqueVendasMap = <String, Venda>{};
-          for (final v in vendas) {
-            uniqueVendasMap[v.id] = v;
+          if (vendas.isEmpty) {
+            return const Center(child: Text('Nenhuma venda registrada.'));
           }
-          final uniqueVendas = uniqueVendasMap.values.toList();
 
-          return produtosAsync.when(
-            data: (produtos) => fazendasAsync.when(
-              data: (fazendas) {
-                return ListView.builder(
-                  itemCount: uniqueVendas.length,
-                  itemBuilder: (_, i) {
-                    final venda = uniqueVendas[i];
+          return produtoMapaAsync.when(
+            data: (produtoMap) => fazendaMapaAsync.when(
+              data: (fazendaMap) => safraMapaAsync.when(
+                data: (safraMap) => ListView.builder(
+                  itemCount: vendas.length,
+                  itemBuilder: (context, i) {
+                    final v = vendas[i];
+                    final itensStr = v.itens.map((e) {
+                      final nomeProduto =
+                          produtoMap[e.produtoId] ?? e.produtoId;
+                      final nomeFazenda = e.fazendaId != null
+                          ? (fazendaMap[e.fazendaId!] ?? e.fazendaId!)
+                          : '-';
+                      final nomeSafra = e.safraId != null
+                          ? (safraMap[e.safraId!] ?? e.safraId!)
+                          : '-';
+                      return 'Quantidade: ${e.quantidade}\nSafra: $nomeSafra | Fazenda: $nomeFazenda';
+                    }).join('\n\n');
 
-                    final produto = produtos.firstWhere(
-                      (p) => p.id == venda.produtoId,
-                      orElse: () => Product(id: venda.produtoId, nome: 'Produto Desconhecido'),
-                    );
-
-                    // Fazenda pode ser nome ou id — tentar achar pelo id, senão usa valor bruto
-                    final fazendaRaw = venda.fazendaId;
-                    final fazendaObj = fazendas.firstWhere(
-                      (f) => f.id == fazendaRaw,
-                      orElse: () => Fazenda(
-                        id: '',
-                        nome: fazendaRaw,
-                        estado: '',
-                        latitude: 0.0,
-                        longitude: 0.0,
-                      ),
-                    );
-
-                    final fazendaNome = fazendaObj.nome.isNotEmpty ? fazendaObj.nome : venda.fazendaId;
+                    final vendaNomeProduto = v.itens.isNotEmpty
+                        ? (produtoMap[v.itens.first.produtoId] ??
+                            v.itens.first.produtoId)
+                        : 'Sem Produto';
 
                     return ListTile(
-                      title: Text(produto.nome),
-                      subtitle: Text(
-                        'Qtd: ${venda.quantidade}, R\$ ${venda.valor.toStringAsFixed(2)}, Fazenda: $fazendaNome',
-                      ),
+                      title: Text('Venda: $vendaNomeProduto'),
+                      subtitle: Text(itensStr),
+                      isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => _abrirForm(venda),
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _abrirFormulario(v),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => _excluirVenda(venda),
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text("Excluir Venda"),
+                                  content: const Text(
+                                      "Tem certeza que deseja excluir esta venda?"),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text("Cancelar")),
+                                    TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text("Excluir")),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await ref
+                                    .read(vendaRepositoryProvider)
+                                    .deleteVenda(v);
+                              }
+                            },
                           ),
                         ],
                       ),
+                      onTap: () => _abrirFormulario(v),
                     );
                   },
-                );
-              },
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Erro safras: \$e')),
+              ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Erro ao carregar fazendas: $e')),
+              error: (e, _) => Center(child: Text('Erro fazendas: \$e')),
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Erro ao carregar produtos: $e')),
+            error: (e, _) => Center(child: Text('Erro produtos: \$e')),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Erro ao carregar vendas: $e')),
+        error: (e, _) => Center(child: Text('Erro ao carregar vendas: \$e')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirForm(),
+        onPressed: () => _abrirFormulario(),
         child: const Icon(Icons.add),
+        tooltip: 'Adicionar Venda',
       ),
     );
   }

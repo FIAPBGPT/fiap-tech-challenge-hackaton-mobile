@@ -1,20 +1,18 @@
+import 'package:fiap_farms_app/core/providers/estoque_provider.dart';
+import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
+import 'package:fiap_farms_app/core/providers/product_provider.dart';
+import 'package:fiap_farms_app/core/providers/safra_provider.dart';
+import 'package:fiap_farms_app/core/providers/venda_provider.dart';
+import 'package:fiap_farms_app/domain/entities/venda.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../domain/entities/venda.dart';
-import '../../core/providers/estoque_provider.dart';
-import '../../core/providers/product_provider.dart';
-import '../../core/providers/safra_provider.dart';
-import '../../core/providers/fazenda_provider.dart';
-import '../../core/providers/venda_provider.dart';
-import '../../domain/entities/estoque.dart';
 
 class VendaForm extends ConsumerStatefulWidget {
   final Venda? existing;
-  final VoidCallback? onSuccess;
+  final VoidCallback onSuccess;
 
-  const VendaForm({this.existing, this.onSuccess, super.key});
+  const VendaForm({Key? key, this.existing, required this.onSuccess})
+      : super(key: key);
 
   @override
   ConsumerState<VendaForm> createState() => _VendaFormState();
@@ -23,229 +21,204 @@ class VendaForm extends ConsumerStatefulWidget {
 class _VendaFormState extends ConsumerState<VendaForm> {
   final _formKey = GlobalKey<FormState>();
 
-  String produtoId = '';
-  String? safraId;
+  String? produtoId;
   String? fazendaId;
-
-  final _quantidadeController = TextEditingController();
-  final _valorController = TextEditingController();
-
-  bool _loading = false;
+  String? safraId;
+  double? quantidade;
+  double saldo = 0;
+  DateTime data = DateTime.now();
+  bool carregando = false;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.existing != null) {
-      final v = widget.existing!;
-      produtoId = v.produtoId;
-      safraId = v.safraId.isNotEmpty ? v.safraId : null;
-      fazendaId = v.fazendaId.isNotEmpty ? v.fazendaId : null;
-      _quantidadeController.text = v.quantidade.toString();
-      _valorController.text = v.valor.toString();
+    final existing = widget.existing;
+    if (existing != null && existing.itens.isNotEmpty) {
+      final item = existing.itens.first;
+      produtoId = item.produtoId;
+      safraId = item.safraId;
+      fazendaId = item.fazendaId;
+      quantidade = item.quantidade;
+      data = existing.data;
+    }
+
+    _consultarSaldo();
+  }
+
+  Future<void> _consultarSaldo() async {
+    if (produtoId != null) {
+      final resultado =
+          await ref.read(estoqueRepositoryProvider).consultarSaldo(
+                produtoId: produtoId!,
+                safraId: safraId,
+                fazendaId: fazendaId,
+              );
+      setState(() => saldo = resultado);
+    } else {
+      setState(() => saldo = 0);
     }
   }
 
-  @override
-  void dispose() {
-    _quantidadeController.dispose();
-    _valorController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
+  Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
 
-    setState(() => _loading = true);
+    if (produtoId == null || quantidade == null || quantidade! <= 0) return;
 
-    final repoVenda = ref.read(vendaRepositoryProvider);
-    final repoEstoque = ref.read(estoqueRepositoryProvider);
+    if (quantidade! > saldo) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Estoque insuficiente. Saldo: $saldo')),
+      );
+      return;
+    }
 
+    final venda = Venda(
+      id: widget.existing?.id ?? '',
+      itens: [
+        VendaItem(
+          produtoId: produtoId!,
+          quantidade: quantidade!,
+          safraId: safraId,
+          fazendaId: fazendaId,
+        )
+      ],
+      data: data,
+    );
+
+    setState(() => carregando = true);
     try {
-      var novaVenda = Venda(
-        id: widget.existing?.id ?? const Uuid().v4(),
-        produtoId: produtoId,
-        safraId: safraId ?? '',
-        fazendaId: fazendaId ?? '',
-        quantidade: double.parse(_quantidadeController.text),
-        valor: double.parse(_valorController.text),
-        uid: '', // Exemplo: FirebaseAuth.instance.currentUser?.uid ?? ''
-        data: widget.existing?.data ?? DateTime.now(),
-      );
-
-      // Se for edição, reabastece o estoque com os dados antigos
-      if (widget.existing != null) {
-        await repoEstoque.adicionarEstoque(
-          Estoque(
-            id: const Uuid().v4(),
-            produtoId: widget.existing!.produtoId,
-            safraId: widget.existing!.safraId.isEmpty ? null : widget.existing!.safraId,
-            fazendaId: widget.existing!.fazendaId.isEmpty ? null : widget.existing!.fazendaId,
-            quantidade: widget.existing!.quantidade,
-            tipo: 'entrada',
-            observacao: 'Reabastecimento por edição da venda ID: ${widget.existing!.id}',
-            data: DateTime.now(),
-          ),
-        );
-      }
-
-      // Verifica saldo de estoque atual
-      final saldo = await repoEstoque.consultarSaldo(
-        produtoId: novaVenda.produtoId,
-        safraId: novaVenda.safraId.isEmpty ? null : novaVenda.safraId,
-        fazendaId: novaVenda.fazendaId.isEmpty ? null : novaVenda.fazendaId,
-      );
-
-      if (novaVenda.quantidade > saldo) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Saldo insuficiente no estoque. Saldo atual: $saldo')),
-          );
-        }
-        setState(() => _loading = false);
-        return;
-      }
-
-      // Salvar venda (editar ou criar)
-      if (widget.existing != null) {
-        await repoVenda.atualizarVenda(novaVenda.id, novaVenda);
+      if (widget.existing == null) {
+        await ref.read(vendaRepositoryProvider).addVenda(venda);
       } else {
-        await repoVenda.adicionarVenda(novaVenda);
+        await ref.read(vendaRepositoryProvider).updateVenda(venda);
       }
-
-      // Registrar saída no estoque
-      await repoEstoque.adicionarEstoque(
-        Estoque(
-          id: const Uuid().v4(),
-          produtoId: novaVenda.produtoId,
-          safraId: novaVenda.safraId.isEmpty ? null : novaVenda.safraId,
-          fazendaId: novaVenda.fazendaId.isEmpty ? null : novaVenda.fazendaId,
-          quantidade: novaVenda.quantidade,
-          tipo: 'saida',
-          observacao: 'Venda ID: ${novaVenda.id}',
-          data: DateTime.now(),
-        ),
-      );
-
-      if (context.mounted) {
-        widget.onSuccess?.call();
-        Navigator.of(context).pop();
-      }
+      widget.onSuccess();
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar venda: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => carregando = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final produtosAsync = ref.watch(productListStreamProvider);
-    final safrasAsync = ref.watch(safraListStreamProvider);
+    final produtosAsync = ref.watch(produtoMapProvider);
     final fazendasAsync = ref.watch(fazendaListStreamProvider);
+    final safrasAsync = ref.watch(safraListStreamProvider);
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
+    final isEditing = widget.existing != null;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          produtosAsync.when(
-            data: (produtos) {
-              // Garantir que o produtoId esteja na lista
-              if (produtoId.isNotEmpty && !produtos.any((p) => p.id == produtoId)) {
-                produtoId = '';
-              }
-
-              return DropdownButtonFormField<String>(
-                value: produtoId.isNotEmpty ? produtoId : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            produtosAsync.when(
+              data: (produtos) => DropdownButtonFormField<String>(
+                value: produtoId,
                 decoration: const InputDecoration(labelText: 'Produto'),
-                items: produtos
-                    .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nome)))
-                    .toList(),
-                onChanged: (val) => setState(() => produtoId = val ?? ''),
-                validator: (v) => v == null || v.isEmpty ? 'Selecione um produto' : null,
-              );
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (e, _) => Text('Erro ao carregar produtos: $e'),
-          ),
-          safrasAsync.when(
-            data: (safras) {
-              if (safraId != null && !safras.any((s) => s.id == safraId)) {
-                safraId = null;
-              }
-
-              return DropdownButtonFormField<String>(
-                value: safraId,
-                decoration: const InputDecoration(labelText: 'Safra'),
-                items: safras
-                    .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
-                    .toList(),
-                onChanged: (val) => setState(() => safraId = val),
-                // safra pode ser opcional, então sem validator
-              );
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (e, _) => Text('Erro ao carregar safras: $e'),
-          ),
-          fazendasAsync.when(
-            data: (fazendas) {
-              if (fazendaId != null && !fazendas.any((f) => f.id == fazendaId)) {
-                fazendaId = null;
-              }
-
-              return DropdownButtonFormField<String>(
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Selecione')),
+                  ...produtos.entries.map((e) =>
+                      DropdownMenuItem(value: e.key, child: Text(e.value)))
+                ],
+                validator: (v) => v == null ? 'Selecione o produto' : null,
+                onChanged: isEditing
+                    ? null
+                    : (v) {
+                        setState(() => produtoId = v);
+                        _consultarSaldo();
+                      },
+),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => Text('Erro ao carregar produtos: $e'),
+            ),
+            const SizedBox(height: 8),
+            fazendasAsync.when(
+              data: (fazendas) => DropdownButtonFormField<String>(
                 value: fazendaId,
                 decoration: const InputDecoration(labelText: 'Fazenda'),
-                items: fazendas
-                    .map((f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
-                    .toList(),
-                onChanged: (val) => setState(() => fazendaId = val),
-                // fazenda pode ser opcional, se for, não obrigar validação
-              );
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (e, _) => Text('Erro ao carregar fazendas: $e'),
-          ),
-          TextFormField(
-            controller: _quantidadeController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Quantidade'),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Informe a quantidade';
-              final q = double.tryParse(v);
-              if (q == null || q <= 0) return 'Quantidade inválida';
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _valorController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Valor'),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Informe o valor';
-              final val = double.tryParse(v);
-              if (val == null || val < 0) return 'Valor inválido';
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
-          _loading
-              ? const CircularProgressIndicator()
-              : ElevatedButton(
-                  onPressed: _submit,
-                  child: Text(widget.existing != null ? 'Atualizar' : 'Cadastrar'),
-                ),
-        ]),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Todas')),
+                  ...fazendas.map(
+                      (f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
+                ],
+                validator: (v) => v == null ? 'Selecione a fazenda' : null,
+                onChanged: isEditing
+                    ? null
+                    : (v) {
+                        setState(() => fazendaId = v);
+                        _consultarSaldo();
+                      },
+              ),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => Text('Erro fazendas: $e'),
+            ),
+            const SizedBox(height: 8),
+            safrasAsync.when(
+              data: (safras) => DropdownButtonFormField<String>(
+                value: safraId,
+                decoration: const InputDecoration(labelText: 'Safra'),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Todas')),
+                  ...safras.map(
+                      (s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
+                ],
+                validator: (v) => v == null ? 'Selecione a safra' : null,
+                onChanged: isEditing
+                    ? null
+                    : (v) {
+                        setState(() => safraId = v);
+                        _consultarSaldo();
+                      },
+              ),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => Text('Erro safras: $e'),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              initialValue:
+                  quantidade != null ? quantidade!.toStringAsFixed(2) : '',
+              decoration: const InputDecoration(labelText: 'Quantidade'),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                final q = double.tryParse(v ?? '');
+                if (q == null || q <= 0) return 'Quantidade inválida';
+                if (q > saldo) return 'Excede o saldo disponível ($saldo)';
+                return null;
+              },
+              onSaved: (v) => quantidade = double.tryParse(v ?? ''),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Saldo disponível: ${saldo.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: (carregando ||
+                      produtoId == null ||
+                      quantidade == null ||
+                      quantidade! > saldo)
+                  ? null
+                  : _salvar,
+              child: carregando
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(isEditing ? 'Atualizar Venda' : 'Registrar Venda'),
+            )
+          ],
+        ),
       ),
     );
   }

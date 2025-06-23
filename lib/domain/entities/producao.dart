@@ -1,59 +1,77 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Producao {
   final String id;
-  final String uid;
   final String produto;
-  final int quantidade;
-  final String fazenda;
-  final String safra;
+  final String? safra;
+  final String? fazenda;
+  final double quantidade;
+  final DateTime data;
+  final String? observacao;
 
   Producao({
     required this.id,
-    required this.uid,
     required this.produto,
+    this.safra,
+    this.fazenda,
     required this.quantidade,
-    required this.fazenda,
-    required this.safra,
+    required this.data,
+    this.observacao,
   });
 
+  Map<String, dynamic> toMap([String? id]) => {
+        'produto': produto,
+        'safra': safra,
+        'fazenda': fazenda,
+        'quantidade': quantidade,
+        'data': data,
+        'observacao': observacao,
+      };
 
-  factory Producao.fromMap(Map<String, dynamic> data, String documentId) {
+  factory Producao.fromMap(Map<String, dynamic> m, String id) {
+    final dataRaw = m['data'];
+    DateTime data;
+
+    if (dataRaw == null) {
+      throw Exception('Campo data está nulo no documento $id');
+    } else if (dataRaw is Timestamp) {
+      data = dataRaw.toDate();
+    } else if (dataRaw is DateTime) {
+      data = dataRaw;
+    } else {
+      throw Exception('Campo data inválido no documento $id');
+    }
+
     return Producao(
-      id: documentId,
-      uid: data['uid'] ?? '',
-      produto: data['produto'] ?? '',
-      quantidade: (data['quantidade'] as num?)?.toInt() ?? 0,
-      fazenda: data['fazenda'] ?? '',
-      safra: data['safra'] ?? '',
+      id: id,
+      produto: m['produto'] as String,
+      safra: m['safra'] as String?,
+      fazenda: m['fazenda'] as String?,
+      quantidade: (m['quantidade'] as num).toDouble(),
+      data: data,
+      observacao: m['observacao'] as String?,
     );
   }
 
 
-  Map<String, dynamic> toMap() {
-    return {
-      'uid': uid,
-      'produto': produto,
-      'quantidade': quantidade,
-      'fazenda': fazenda,
-      'safra': safra,
-    };
-  }
-
 
   Producao copyWith({
     String? id,
-    String? uid,
     String? produto,
-    int? quantidade,
-    String? fazenda,
     String? safra,
+    String? fazenda,
+    double? quantidade,
+    DateTime? data,
+    String? observacao,
   }) {
     return Producao(
       id: id ?? this.id,
-      uid: uid ?? this.uid,
       produto: produto ?? this.produto,
-      quantidade: quantidade ?? this.quantidade,
-      fazenda: fazenda ?? this.fazenda,
       safra: safra ?? this.safra,
+      fazenda: fazenda ?? this.fazenda,
+      quantidade: quantidade ?? this.quantidade,
+      data: data ?? this.data,
+      observacao: observacao ?? this.observacao,
     );
   }
 }

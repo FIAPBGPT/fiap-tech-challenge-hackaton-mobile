@@ -7,4 +7,5 @@ enum HomeSection {
   metas,
   fazendas,
   safras,
+  invite,
 }

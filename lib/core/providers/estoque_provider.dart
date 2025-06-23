@@ -10,7 +10,7 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
 
 final estoqueRepositoryProvider = Provider<EstoqueRepository>((ref) {
   final firestore = ref.read(firestoreProvider);
-  return EstoqueRepositoryImpl(firestore);
+  return EstoqueRepositoryImpl(firestore: firestore);
 });
 
 final estoqueListStreamProvider = StreamProvider.autoDispose<List<Estoque>>((ref) {

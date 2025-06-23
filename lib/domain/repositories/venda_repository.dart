@@ -1,8 +1,8 @@
-import 'package:fiap_farms_app/domain/entities/venda.dart';
+import '../entities/venda.dart';
 
 abstract class VendaRepository {
-  Stream<List<Venda>> listarVendas();
-  Future<String> adicionarVenda(Venda venda);
-  Future<void> atualizarVenda(String id, Venda venda);
-  Future<void> excluirVenda(String id);
+  Future<void> addVenda(Venda venda);
+  Future<void> updateVenda(Venda venda);
+  Future<void> deleteVenda(Venda venda);
+  Stream<List<Venda>> watchAllVendas();
 }

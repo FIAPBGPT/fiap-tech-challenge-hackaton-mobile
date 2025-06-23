@@ -31,14 +31,17 @@ class Estoque {
         'data': data,
       };
 
-factory Estoque.fromMap(String id, Map<String, dynamic> m) {
+  factory Estoque.fromMap(String id, Map<String, dynamic> m) {
   final produtoId = m['produtoId'] as String?;
   final tipo = m['tipo'] as String?;
   final quantidade = m['quantidade'];
   final data = m['data'];
 
-  if (produtoId == null || tipo == null || quantidade == null || data == null || data is! Timestamp) {
-    // Retorna null ou lança, depende do seu uso
+    if (produtoId == null ||
+        tipo == null ||
+        quantidade == null ||
+        data == null ||
+        data is! Timestamp) {
     throw Exception('Documento $id possui dados inválidos.');
   }
 
@@ -47,12 +50,34 @@ factory Estoque.fromMap(String id, Map<String, dynamic> m) {
     produtoId: produtoId,
     safraId: m['safraId'] as String?,
     fazendaId: m['fazendaId'] as String?,
-    quantidade: (quantidade as num).toDouble(),
+      quantidade: (quantidade as num).toDouble(),
     tipo: tipo,
     observacao: m['observacao'] as String?,
     data: (data as Timestamp).toDate(),
   );
 }
+
+Estoque copyWith({
+    String? id,
+    String? produtoId,
+    String? safraId,
+    String? fazendaId,
+    double? quantidade,
+    String? tipo,
+    String? observacao,
+    DateTime? data,
+  }) {
+    return Estoque(
+      id: id ?? this.id,
+      produtoId: produtoId ?? this.produtoId,
+      safraId: safraId ?? this.safraId,
+      fazendaId: fazendaId ?? this.fazendaId,
+      quantidade: quantidade ?? this.quantidade,
+      tipo: tipo ?? this.tipo,
+      observacao: observacao ?? this.observacao,
+      data: data ?? this.data,
+    );
+  }
 
 
 }

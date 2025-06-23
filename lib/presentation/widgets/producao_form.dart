@@ -1,18 +1,14 @@
-import 'package:fiap_farms_app/core/providers/auth_provider.dart';
+import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
+import 'package:fiap_farms_app/core/providers/producao_provider.dart';
+import 'package:fiap_farms_app/core/providers/product_provider.dart';
+import 'package:fiap_farms_app/core/providers/safra_provider.dart';
+import 'package:fiap_farms_app/domain/entities/producao.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../domain/entities/producao.dart';
-import '../../core/providers/producao_provider.dart';
-import '../../core/providers/fazenda_provider.dart';
-import '../../core/providers/product_provider.dart';
-import '../../core/providers/safra_provider.dart';
 
 class ProducaoForm extends ConsumerStatefulWidget {
-  final Producao? existing;
-
-  const ProducaoForm({this.existing, super.key});
+  final Producao? producao;
+  const ProducaoForm({super.key, this.producao});
 
   @override
   ConsumerState<ProducaoForm> createState() => _ProducaoFormState();
@@ -20,166 +16,90 @@ class ProducaoForm extends ConsumerStatefulWidget {
 
 class _ProducaoFormState extends ConsumerState<ProducaoForm> {
   final _formKey = GlobalKey<FormState>();
-  String? selectedProduto;
-  String? selectedFazenda;
-  String? selectedSafra;
-  int? quantidade;
+  late TextEditingController _qController;
+  String? produtoId;
+  String? safraId;
+  String? fazendaId;
 
   @override
   void initState() {
     super.initState();
-    if (widget.existing != null) {
-      selectedProduto = widget.existing!.produto;
-      selectedFazenda = widget.existing!.fazenda;
-      selectedSafra = widget.existing!.safra;
-      quantidade = widget.existing!.quantidade;
-    }
+    final p = widget.producao;
+    _qController = TextEditingController(text: p?.quantidade.toString() ?? '');
+    produtoId = p?.produto;
+    safraId = p?.safra;
+    fazendaId = p?.fazenda;
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = ref.read(producaoRepositoryProvider);
-    final produtosAsync = ref.watch(productListStreamProvider);
-    final fazendasAsync = ref.watch(fazendaListStreamProvider);
-    final safrasAsync = ref.watch(safraListStreamProvider);
+    final produtos = ref.watch(productListStreamProvider);
+    final fazendas = ref.watch(fazendaListStreamProvider);
+    final safras = ref.watch(safraListStreamProvider);
 
-    return SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-              Text(
-            widget.existing == null ? 'Nova Produção' : 'Editar Produção',
-            style: Theme.of(context).textTheme.titleLarge,
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          DropdownButtonFormField<String>(
+            value: produtoId,
+            hint: const Text('Selecione o produto'),
+            items: produtos.value
+                    ?.map((p) =>
+                        DropdownMenuItem(value: p.id, child: Text(p.nome)))
+                    .toList() ??
+                [],
+            onChanged: (v) => setState(() => produtoId = v),
           ),
-          const SizedBox(height: 16),
-            produtosAsync.when(
-              data: (produtos) {
-                if (!produtos.any((p) => p.id == selectedProduto)) {
-                  selectedProduto = null;
-                }
-
-                
-
-                return DropdownButtonFormField<String>(
-                  value: selectedProduto,
-                  items: produtos
-                      .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nome)))
-                      .toList(),
-                  onChanged: (val) => setState(() => selectedProduto = val),
-                  decoration: const InputDecoration(labelText: 'Produto'),
-                  validator: (value) => value == null ? 'Selecione um produto' : null,
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro ao carregar produtos: $e'),
-            ),
-
-            fazendasAsync.when(
-              data: (fazendas) {
-                if (!fazendas.any((f) => f.id == selectedFazenda)) {
-                  selectedFazenda = null;
-                }
-
-                return DropdownButtonFormField<String>(
-                  value: selectedFazenda,
-                  items: fazendas
-                      .map((f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
-                      .toList(),
-                  onChanged: (val) => setState(() => selectedFazenda = val),
-                  decoration: const InputDecoration(labelText: 'Fazenda'),
-                  validator: (value) => value == null ? 'Selecione uma fazenda' : null,
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro ao carregar fazendas: $e'),
-            ),
-
-            safrasAsync.when(
-              data: (safras) {
-                if (!safras.any((s) => s.id == selectedSafra)) {
-                  selectedSafra = null;
-                }
-
-                return DropdownButtonFormField<String>(
-                  value: selectedSafra,
-                  items: safras
-                      .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
-                      .toList(),
-                  onChanged: (val) => setState(() => selectedSafra = val),
-                  decoration: const InputDecoration(labelText: 'Safra'),
-                  validator: (value) => value == null ? 'Selecione uma safra' : null,
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro ao carregar safras: $e'),
-            ),
-
-            TextFormField(
-              initialValue: quantidade?.toString(),
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Quantidade'),
-              validator: (value) {
-                final q = int.tryParse(value ?? '');
-                if (q == null || q <= 0) return 'Informe uma quantidade válida';
-                return null;
-              },
-              onSaved: (val) => quantidade = int.tryParse(val ?? ''),
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-  if (!_formKey.currentState!.validate()) return;
-  _formKey.currentState!.save();
-
-  final user = ref.read(authProvider);
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Usuário não autenticado")),
-    );
-    return;
-  }
-
-  final producao = Producao(
-    id: widget.existing?.id ?? '',
-    produto: selectedProduto!,
-    quantidade: quantidade!,
-    fazenda: selectedFazenda!,
-    safra: selectedSafra!,
-    uid: user.uid, // precisa ter esse campo na entidade
-  );
-
-  try {
-    if (widget.existing == null) {
-      // 1. Cadastrar produção
-      final docRef = await repo.addProducaoRetornandoRef(producao);
-
-      // 2. Registrar no estoque
-      await repo.registrarProducaoEstoque(producao.copyWith(id: docRef.id));
-
-    } else {
-      // Atualizar produção
-      await repo.updateProducao(producao);
-    }
-
-    if (context.mounted) Navigator.of(context).pop();
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar produção: $e')),
-      );
-    }
-  }
-},
-
-              child: Text(widget.existing == null ? 'Cadastrar' : 'Atualizar'),
-            ),
-          ],
-        ),
+          DropdownButtonFormField<String>(
+            value: safraId,
+            hint: const Text('Selecione a safra'),
+            items: safras.value
+                    ?.map((s) =>
+                        DropdownMenuItem(value: s.id, child: Text(s.nome)))
+                    .toList() ??
+                [],
+            onChanged: (v) => setState(() => safraId = v),
+          ),
+          DropdownButtonFormField<String>(
+            value: fazendaId,
+            hint: const Text('Selecione a fazenda'),
+            items: fazendas.value
+                    ?.map((f) =>
+                        DropdownMenuItem(value: f.id, child: Text(f.nome)))
+                    .toList() ??
+                [],
+            onChanged: (v) => setState(() => fazendaId = v),
+          ),
+          TextFormField(
+            controller: _qController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Quantidade'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final quantidade = double.tryParse(_qController.text) ?? 0;
+              final p = Producao(
+                id: widget.producao?.id ?? '',
+                produto: produtoId ?? '',
+                safra: safraId,
+                fazenda: fazendaId,
+                quantidade: quantidade,
+                data: widget.producao?.data ?? DateTime.now(),
+              );
+              if (widget.producao == null) {
+                await ref.read(producaoRepositoryProvider).addProducao(p);
+              } else {
+                await ref
+                    .read(producaoRepositoryProvider)
+                    .updateProducao(widget.producao!, p);
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: Text(widget.producao == null ? 'Salvar' : 'Atualizar'),
+          ),
+        ]),
       ),
     );
   }
 }
-
