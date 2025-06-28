@@ -6,7 +6,7 @@ class Estoque {
   final String? safraId;
   final String? fazendaId;
   final double quantidade;
-  final String tipo; // "entrada" ou "saida"
+  final String tipo; // 'entrada' ou 'saida'
   final String? observacao;
   final DateTime data;
 
@@ -21,6 +21,7 @@ class Estoque {
     required this.data,
   });
 
+  /// Converte o objeto Estoque para um mapa compatível com Firestore
   Map<String, dynamic> toMap() => {
         'produtoId': produtoId,
         'safraId': safraId,
@@ -28,36 +29,38 @@ class Estoque {
         'quantidade': quantidade,
         'tipo': tipo,
         'observacao': observacao,
-        'data': data,
+        'data': Timestamp.fromDate(data), // 🔥 Corrigido!
       };
 
+  /// Construtor de fábrica que converte um mapa Firestore em um objeto Estoque
   factory Estoque.fromMap(String id, Map<String, dynamic> m) {
-  final produtoId = m['produtoId'] as String?;
-  final tipo = m['tipo'] as String?;
-  final quantidade = m['quantidade'];
-  final data = m['data'];
+    final produtoId = m['produtoId'] as String?;
+    final tipo = m['tipo'] as String?;
+    final quantidade = m['quantidade'];
+    final data = m['data'];
 
     if (produtoId == null ||
         tipo == null ||
         quantidade == null ||
         data == null ||
         data is! Timestamp) {
-    throw Exception('Documento $id possui dados inválidos.');
+      throw Exception('Documento $id possui dados inválidos.');
+    }
+
+    return Estoque(
+      id: id,
+      produtoId: produtoId,
+      safraId: m['safraId'] as String?,
+      fazendaId: m['fazendaId'] as String?,
+      quantidade: (quantidade as num).toDouble(),
+      tipo: tipo,
+      observacao: m['observacao'] as String?,
+      data: data.toDate(),
+    );
   }
 
-  return Estoque(
-    id: id,
-    produtoId: produtoId,
-    safraId: m['safraId'] as String?,
-    fazendaId: m['fazendaId'] as String?,
-      quantidade: (quantidade as num).toDouble(),
-    tipo: tipo,
-    observacao: m['observacao'] as String?,
-    data: (data as Timestamp).toDate(),
-  );
-}
-
-Estoque copyWith({
+  /// Permite criar uma cópia modificada do objeto Estoque
+  Estoque copyWith({
     String? id,
     String? produtoId,
     String? safraId,
@@ -78,6 +81,4 @@ Estoque copyWith({
       data: data ?? this.data,
     );
   }
-
-
 }

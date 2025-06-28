@@ -1,11 +1,9 @@
-import 'package:fiap_farms_app/core/providers/estoque_provider.dart';
 import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
 import 'package:fiap_farms_app/core/providers/product_provider.dart';
 import 'package:fiap_farms_app/core/providers/safra_provider.dart';
 import 'package:fiap_farms_app/domain/entities/estoque.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 class EstoqueForm extends ConsumerStatefulWidget {
   final Estoque? existing;
@@ -38,41 +36,6 @@ class _EstoqueFormState extends ConsumerState<EstoqueForm> {
       tipo = e.tipo;
       _qController.text = e.quantidade.toString();
       _obsController.text = e.observacao ?? '';
-    }
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final repo = ref.read(estoqueRepositoryProvider);
-    final e = Estoque(
-      id: widget.existing?.id ?? const Uuid().v4(),
-      produtoId: produto,
-      safraId: safra,
-      fazendaId: fazenda,
-      quantidade: double.tryParse(_qController.text) ?? 0.0,
-      tipo: tipo,
-      observacao: _obsController.text.trim().isEmpty ? null : _obsController.text.trim(),
-      data: widget.existing?.data ?? DateTime.now(), // preserva data na edição
-    );
-
-    try {
-      if (widget.existing != null) {
-        await repo.atualizarEstoque(e.id, e.toMap());
-      } else {
-        await repo.adicionarEstoque(e);
-      }
-
-      if (context.mounted) {
-        widget.onSuccess?.call();
-        Navigator.pop(context);
-      }
-    } catch (err) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar: $err')),
-        );
-      }
     }
   }
 
@@ -150,10 +113,6 @@ class _EstoqueFormState extends ConsumerState<EstoqueForm> {
             maxLines: null,
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _submit,
-            child: Text(widget.existing != null ? 'Atualizar' : 'Cadastrar'),
-          ),
         ]),
       ),
     );

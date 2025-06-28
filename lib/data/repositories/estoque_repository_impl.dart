@@ -90,44 +90,46 @@ class EstoqueRepositoryImpl implements EstoqueRepository {
     }
   }
 
-  // Registrar saída no estoque ao adicionar venda
+  // Registrar saída ao vender
+  @override
   Future<List<Estoque>> registrarVendaEstoque(Venda venda) async {
-    final List<Estoque> entradas = [];
+    final List<Estoque> saidas = [];
     for (final item in venda.itens) {
       final docRef = _col.doc();
-      final data = {
-        'produtoId': item.produtoId,
-        'safraId': item.safraId,
-        'fazendaId': item.fazendaId,
-        'quantidade': item.quantidade.toDouble(),
-        'tipo': 'saida',
-        'observacao': 'Venda ID: ${venda.id}',
-        'data': FieldValue.serverTimestamp(),
-      };
-      await docRef.set(data);
-      entradas
-          .add(Estoque.fromMap(docRef.id, {...data, 'data': DateTime.now()}));
+      final estoque = Estoque(
+        id: docRef.id,
+        produtoId: item.produtoId,
+        safraId: item.safraId,
+        fazendaId: item.fazendaId,
+        quantidade: item.quantidade,
+        tipo: 'saida',
+        observacao: 'Venda ID: ${venda.id}',
+        data: DateTime.now(),
+      );
+      await docRef.set(estoque.toMap());
+      saidas.add(estoque);
     }
-    return entradas;
+    return saidas;
   }
 
-  // Reabastece o estoque ao excluir uma venda (entrada contrária)
+  // Reverter estoque ao excluir venda
+  @override
   Future<List<Estoque>> reabastecerEstoqueVenda(Venda venda) async {
     final List<Estoque> entradas = [];
     for (final item in venda.itens) {
       final docRef = _col.doc();
-      final data = {
-        'produtoId': item.produtoId,
-        'safraId': item.safraId,
-        'fazendaId': item.fazendaId,
-        'quantidade': item.quantidade.toDouble(),
-        'tipo': 'entrada',
-        'observacao': 'Reversão de Venda ID: ${venda.id}',
-        'data': FieldValue.serverTimestamp(),
-      };
-      await docRef.set(data);
-      entradas
-          .add(Estoque.fromMap(docRef.id, {...data, 'data': DateTime.now()}));
+      final estoque = Estoque(
+        id: docRef.id,
+        produtoId: item.produtoId,
+        safraId: item.safraId,
+        fazendaId: item.fazendaId,
+        quantidade: item.quantidade,
+        tipo: 'entrada',
+        observacao: 'Reversão de Venda ID: ${venda.id}',
+        data: DateTime.now(),
+      );
+      await docRef.set(estoque.toMap());
+      entradas.add(estoque);
     }
     return entradas;
   }

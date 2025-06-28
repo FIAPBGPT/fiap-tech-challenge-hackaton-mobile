@@ -6,7 +6,6 @@ import '../../core/providers/product_provider.dart';
 import '../../core/providers/fazenda_provider.dart';
 import '../../core/providers/safra_provider.dart';
 import '../../domain/entities/estoque.dart';
-import '../widgets/estoque_form.dart';
 
 class EstoquePage extends ConsumerStatefulWidget {
   const EstoquePage({super.key});
@@ -21,63 +20,6 @@ class _EstoquePageState extends ConsumerState<EstoquePage> {
   String? fazendaId;
   String? safraId;
   double saldoAtual = 0;
-
-  void _abrirForm(BuildContext context, [Estoque? estoque]) {
-    setState(() => estoqueEditando = estoque);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: SafeArea(
-            top: false,
-            child: EstoqueForm(
-              existing: estoqueEditando,
-              onSuccess: () {
-                Navigator.pop(context);
-                setState(() => estoqueEditando = null);
-                _consultarSaldo();
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _excluirEstoque(BuildContext context, WidgetRef ref, String id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Excluir Registro de Estoque"),
-        content: const Text("Tem certeza que deseja excluir este item do estoque?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text("Cancelar")),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text("Excluir")),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      await ref.read(estoqueRepositoryProvider).excluirEstoque(id);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Item excluído com sucesso.")));
-      _consultarSaldo();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro ao excluir: $e")));
-    }
-  }
 
   Future<void> _consultarSaldo() async {
     final repo = ref.read(estoqueRepositoryProvider);
@@ -236,23 +178,6 @@ class _EstoquePageState extends ConsumerState<EstoquePage> {
                             'Data: ${e.data.toLocal().toString().split(' ')[0]}',
                           ),
                           isThreeLine: true,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _abrirForm(context, e),
-                              ),
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () =>
-                                    _excluirEstoque(context, ref, e.id),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _abrirForm(context, e),
                         );
                       },
                     ),
@@ -274,11 +199,6 @@ class _EstoquePageState extends ConsumerState<EstoquePage> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirForm(context),
-        child: const Icon(Icons.add),
-        tooltip: 'Adicionar Estoque',
       ),
     );
   }

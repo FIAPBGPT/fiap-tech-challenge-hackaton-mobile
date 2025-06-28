@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fiap_farms_app/firebase_options.dart';
 import 'package:fiap_farms_app/presentation/pages/splash_page.dart';
 import 'package:flutter/material.dart';
