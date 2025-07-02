@@ -8,6 +8,7 @@ class Producao {
   final double quantidade;
   final DateTime data;
   final String? observacao;
+  final String? uid;
 
   Producao({
     required this.id,
@@ -17,6 +18,7 @@ class Producao {
     required this.quantidade,
     required this.data,
     this.observacao,
+    required this.uid,
   });
 
   Map<String, dynamic> toMap([String? id]) => {
@@ -26,6 +28,7 @@ class Producao {
         'quantidade': quantidade,
         'data': data,
         'observacao': observacao,
+        'uid': uid,
       };
 
   factory Producao.fromMap(Map<String, dynamic> m, String id) {
@@ -50,6 +53,7 @@ class Producao {
       quantidade: (m['quantidade'] as num).toDouble(),
       data: data,
       observacao: m['observacao'] as String?,
+      uid: m['uid'] as String? ?? '',
     );
   }
 
@@ -63,6 +67,7 @@ class Producao {
     double? quantidade,
     DateTime? data,
     String? observacao,
+    String? uid,
   }) {
     return Producao(
       id: id ?? this.id,
@@ -72,6 +77,7 @@ class Producao {
       quantidade: quantidade ?? this.quantidade,
       data: data ?? this.data,
       observacao: observacao ?? this.observacao,
+      uid: uid ?? this.uid,
     );
   }
 }

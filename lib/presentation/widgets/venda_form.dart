@@ -4,6 +4,7 @@ import 'package:fiap_farms_app/core/providers/product_provider.dart';
 import 'package:fiap_farms_app/core/providers/safra_provider.dart';
 import 'package:fiap_farms_app/core/providers/venda_provider.dart';
 import 'package:fiap_farms_app/domain/entities/venda.dart';
+import 'package:fiap_farms_app/core/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,6 +26,7 @@ class _VendaFormState extends ConsumerState<VendaForm> {
   String? fazendaId;
   String? safraId;
   double? quantidade;
+  double? valor;
   double saldo = 0;
   DateTime data = DateTime.now();
   bool carregando = false;
@@ -40,29 +42,55 @@ class _VendaFormState extends ConsumerState<VendaForm> {
       safraId = item.safraId;
       fazendaId = item.fazendaId;
       quantidade = item.quantidade;
+      valor = item.valor;
       data = existing.data;
     }
 
-    _consultarSaldo();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _consultarSaldo());
   }
 
   Future<void> _consultarSaldo() async {
     if (produtoId != null) {
-      final resultado =
+      // Consulta saldo atual do estoque para o produto/safra/fazenda selecionados
+      double resultado =
           await ref.read(estoqueRepositoryProvider).consultarSaldo(
                 produtoId: produtoId!,
                 safraId: safraId,
                 fazendaId: fazendaId,
               );
-      setState(() => saldo = resultado);
+
+      // Se estiver editando uma venda existente, some a quantidade antiga para liberar esse saldo
+      if (widget.existing != null && widget.existing!.itens.isNotEmpty) {
+        final antigo = widget.existing!.itens.first;
+
+        // Só soma se o produto, safra e fazenda forem os mesmos (ou nulos equivalentes)
+        final mesmoProduto = antigo.produtoId == produtoId;
+        final mesmaSafra = (antigo.safraId ?? '') == (safraId ?? '');
+        final mesmaFazenda = (antigo.fazendaId ?? '') == (fazendaId ?? '');
+
+        if (mesmoProduto && mesmaSafra && mesmaFazenda) {
+          resultado += antigo.quantidade;
+        }
+      }
+
+      if (mounted) setState(() => saldo = resultado);
     } else {
-      setState(() => saldo = 0);
+      if (mounted) setState(() => saldo = 0);
     }
   }
+
 
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+
+    final user = ref.read(authProvider);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuário não autenticado')),
+      );
+      return;
+    }
 
     if (produtoId == null || quantidade == null || quantidade! <= 0) return;
 
@@ -79,6 +107,8 @@ class _VendaFormState extends ConsumerState<VendaForm> {
         VendaItem(
           produtoId: produtoId!,
           quantidade: quantidade!,
+          valor: valor!,
+          uid: user.uid,
           safraId: safraId,
           fazendaId: fazendaId,
         )
@@ -94,13 +124,29 @@ class _VendaFormState extends ConsumerState<VendaForm> {
         await ref.read(vendaRepositoryProvider).updateVenda(venda);
       }
       widget.onSuccess();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: $e')),
-      );
+      if (!mounted) return;
+      if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+    } catch (e, stack) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar: $e')),
+        );
+      }
+      print('Erro ao salvar venda: $e\n$stack');
     } finally {
-      setState(() => carregando = false);
+      if (mounted) setState(() => carregando = false);
     }
+  }
+
+  bool get isFormFilled {
+    return produtoId != null &&
+        fazendaId != null &&
+        safraId != null &&
+        quantidade != null &&
+        quantidade! > 0 &&
+        quantidade! <= saldo &&
+        valor != null &&
+        valor! > 0;
   }
 
   @override
@@ -119,22 +165,27 @@ class _VendaFormState extends ConsumerState<VendaForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             produtosAsync.when(
-              data: (produtos) => DropdownButtonFormField<String>(
-                value: produtoId,
-                decoration: const InputDecoration(labelText: 'Produto'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Selecione')),
-                  ...produtos.entries.map((e) =>
-                      DropdownMenuItem(value: e.key, child: Text(e.value)))
-                ],
-                validator: (v) => v == null ? 'Selecione o produto' : null,
-                onChanged: isEditing
-                    ? null
-                    : (v) {
-                        setState(() => produtoId = v);
-                        _consultarSaldo();
-                      },
-),
+              data: (produtos) {
+                final produtoNome =
+                    produtoId != null ? produtos[produtoId] : null;
+                return DropdownButtonFormField<String>(
+                  value: produtoId,
+                  decoration: const InputDecoration(labelText: 'Produto'),
+                  items: [
+                    const DropdownMenuItem(
+                        value: null, child: Text('Selecione')),
+                    ...produtos.entries.map((e) =>
+                        DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  ],
+                  validator: (v) => v == null ? 'Selecione o produto' : null,
+                  onChanged: isEditing
+                      ? null
+                      : (v) {
+                          setState(() => produtoId = v);
+                          _consultarSaldo();
+                        },
+                );
+              },
               loading: () => const LinearProgressIndicator(),
               error: (e, _) => Text('Erro ao carregar produtos: $e'),
             ),
@@ -192,7 +243,21 @@ class _VendaFormState extends ConsumerState<VendaForm> {
                 if (q > saldo) return 'Excede o saldo disponível ($saldo)';
                 return null;
               },
+              onChanged: (v) => setState(() => quantidade = double.tryParse(v)),
               onSaved: (v) => quantidade = double.tryParse(v ?? ''),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              initialValue: valor != null ? valor!.toStringAsFixed(2) : '',
+              decoration: const InputDecoration(labelText: 'Valor'),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                final q = double.tryParse(v ?? '');
+                if (q == null || q <= 0) return 'Valor inválido';
+                return null;
+              },
+              onChanged: (v) => setState(() => valor = double.tryParse(v)),
+              onSaved: (v) => valor = double.tryParse(v ?? ''),
             ),
             const SizedBox(height: 12),
             Align(
@@ -204,12 +269,7 @@ class _VendaFormState extends ConsumerState<VendaForm> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: (carregando ||
-                      produtoId == null ||
-                      quantidade == null ||
-                      quantidade! > saldo)
-                  ? null
-                  : _salvar,
+              onPressed: (carregando || !isFormFilled) ? null : _salvar,
               child: carregando
                   ? const SizedBox(
                       height: 16,

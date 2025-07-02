@@ -103,9 +103,9 @@ class _ProducaoPageState extends ConsumerState<ProducaoPage> {
                           final safraNome =
                               safraMap[p.safra] ?? p.safra ?? 'N/A';
                           return ListTile(
-                            title: Text(produtoNome ?? p.produto),
+                            title: Text(produtoNome),
                             subtitle: Text(
-                              'Qtd: ${p.quantidade} | Safra: ${safraNome ?? '-'} | Fazenda: ${fazendaNome ?? '-'}\n'
+                              'Qtd: ${p.quantidade} | Safra: $safraNome | Fazenda: $fazendaNome\n'
                               'Data: ${p.data.toLocal().toString().split(' ')[0]}',
                             ),
                             trailing: Row(

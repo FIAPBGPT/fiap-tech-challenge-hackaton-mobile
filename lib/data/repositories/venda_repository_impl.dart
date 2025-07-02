@@ -24,8 +24,9 @@ class VendaRepositoryImpl implements VendaRepository {
     }
 
     final docRef = firestore.collection('vendas').doc();
-    await docRef.set(venda.toMap(docRef.id));
+await docRef.set(venda.copyWith(id: docRef.id).toMap());
     await estoqueRepo.registrarVendaEstoque(venda.copyWith(id: docRef.id));
+
   }
 
   @override
