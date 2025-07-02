@@ -6,11 +6,13 @@ import './main_menu_header.dart';
 class MainMenu extends StatelessWidget {
   final String userName;
   final Function selectionHandler;
+  final Function logoutHandler;
 
   const MainMenu({
     super.key,
-    required this.userName,
     required this.selectionHandler,
+    required this.logoutHandler,
+    required this.userName,
   });
 
   @override
@@ -54,6 +56,13 @@ class MainMenu extends StatelessWidget {
           MainMenuItem(
             label: 'Safras',
             action: () => selectionHandler(HomeSection.safras),
+          ),
+          const Divider(
+            color: Color(0xFFDDCCBB),
+          ),
+          MainMenuItem(
+            label: 'Fechar',
+            action: () => logoutHandler(),
           ),
         ],
       ),

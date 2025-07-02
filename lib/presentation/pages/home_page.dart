@@ -6,6 +6,7 @@ import 'package:fiap_farms_app/presentation/pages/producao_page.dart';
 import 'package:fiap_farms_app/presentation/pages/safra_page.dart';
 import 'package:fiap_farms_app/presentation/pages/venda_page.dart';
 import 'package:fiap_farms_app/presentation/widgets/main_menu/main_menu.dart';
+import 'package:fiap_farms_app/presentation/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +57,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pop(context);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  }
+
+  String _userName() {
+    return (FirebaseAuth.instance.currentUser?.email ?? '').split('@')[0];
   }
 
   @override
@@ -66,8 +75,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         title: Text('FIAP Farms • ${currentSection.name.toUpperCase()}'),
       ),
       drawer: MainMenu(
-        userName: 'Usuário dos Anjos', // TODO: Pegar o nome do usuário logado
+        userName: _userName(),
         selectionHandler: _onSelectSection,
+        logoutHandler: _logout,
       ),
       body: _buildSection(currentSection),
     );
