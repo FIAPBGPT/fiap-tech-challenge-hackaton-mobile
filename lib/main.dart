@@ -8,18 +8,19 @@ import 'package:firebase_core/firebase_core.dart';
 void main() async {
   await runZonedGuarded(
     () async {
-  WidgetsFlutterBinding.ensureInitialized();
+      WidgetsFlutterBinding.ensureInitialized();
       await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    const ProviderScope(child: MyApp()),
-  );
+      runApp(
+        const ProviderScope(child: MyApp()),
+      );
     },
     (error, stackTrace) async {
       print(error);
     },
   );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -27,8 +28,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FIAP Farms',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const SplashPage(), 
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        fontFamily: 'Jura',
+      ),
+      home: const SplashPage(),
     );
   }
 }
