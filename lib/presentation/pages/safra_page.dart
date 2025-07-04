@@ -1,88 +1,126 @@
+import 'package:fiap_farms_app/presentation/widgets/generic_table.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/safra_provider.dart';
 import '../widgets/safra_form.dart';
 import '../../domain/entities/safra.dart';
 
-class SafraPage extends ConsumerWidget {
+class SafraPage extends ConsumerStatefulWidget {
   const SafraPage({super.key});
 
-  void _openForm(BuildContext context, {Safra? safra}) {
-    showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: SafeArea(
-          top: false,
-          child: SafraForm(existing: safra),
-        ),
-      ),
-    ),
-  );
+  @override
+  ConsumerState<SafraPage> createState() => _SafraPageState();
+}
+
+class _SafraPageState extends ConsumerState<SafraPage> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final safraAsync = ref.watch(safraListStreamProvider);
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
+  }
+
+  void _openForm(BuildContext context, {Safra? safra}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: SafeArea(
+            top: false,
+            child: SafraForm(existing: safra),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Safra s) async {
     final repo = ref.read(safraRepositoryProvider);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Excluir safra'),
+        content: Text('Deseja excluir "${s.nome}"?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Excluir')),
+        ],
+      ),
+    );
+    if (confirm == true) await repo.deleteSafra(s.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final safrasAsync = ref.watch(safraListStreamProvider);
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Safras')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(context),
         child: const Icon(Icons.add),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: safraAsync.when(
-          data: (safras) {
-            if (safras.isEmpty) return const Center(child: Text("Nenhuma safra cadastrada."));
-            return ListView.builder(
-              itemCount: safras.length,
-              itemBuilder: (_, index) {
-                final s = safras[index];
-                return ListTile(
-                  title: Text(s.nome),
-                  subtitle: Text('Valor: ${s.valor}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(icon: const Icon(Icons.edit), onPressed: () => _openForm(context, safra: s)),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text('Excluir safra'),
-                              content: Text('Deseja excluir "${s.nome}"?'),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-                                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) await repo.deleteSafra(s.id);
-                        },
+      body: safrasAsync.when(
+        data: (safras) {
+          if (safras.isEmpty) {
+            return const Center(child: Text("Nenhuma safra cadastrada."));
+          }
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: CustomPaginatedTable<Safra>(
+                        columns: const ['Nome', 'Valor'],
+                        data: safras,
+                        buildCells: (s) => [
+                          DataCell(Text(s.nome)),
+                          DataCell(Text(
+                              '${double.tryParse(s.valor)?.toStringAsFixed(2) ?? s.valor}')),
+                        ],
+                        onEdit: (s) => _openForm(context, safra: s),
+                        onDelete: (s) => _confirmDelete(context, s),
                       ),
-                    ],
+                    ),
                   ),
-                );
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Erro: $e')),
-        ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Erro: $e')),
       ),
     );
   }
