@@ -63,28 +63,42 @@ Widget build(BuildContext context) {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-                 Text(
+          Text(
             widget.existing == null ? 'Nova Fazenda' : 'Editar Fazenda',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white),
           ),
-        TextField(
-          controller: _nomeController,
-          decoration: const InputDecoration(labelText: 'Nome'),
-        ),
-        TextField(
-          controller: _estadoController,
-          decoration: const InputDecoration(labelText: 'Estado'),
-        ),
-        TextField(
-          controller: _latController,
-          decoration: const InputDecoration(labelText: 'Latitude'),
-          keyboardType: TextInputType.number,
-        ),
-        TextField(
-          controller: _longController,
-          decoration: const InputDecoration(labelText: 'Longitude'),
-          keyboardType: TextInputType.number,
-        ),
+          TextField(
+            controller: _nomeController,
+            decoration: const InputDecoration(
+                labelText: 'Nome', labelStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+          ),
+          TextField(
+            controller: _estadoController,
+            decoration: const InputDecoration(
+                labelText: 'Estado',
+                labelStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+          ),
+          TextField(
+            controller: _latController,
+            decoration: const InputDecoration(
+                labelText: 'Latitude',
+                labelStyle: TextStyle(color: Colors.white)),
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+          ),
+          TextField(
+            controller: _longController,
+            decoration: const InputDecoration(
+                labelText: 'Longitude',
+                labelStyle: TextStyle(color: Colors.white)),
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+          ),
         const SizedBox(height: 20),
         ElevatedButton(
           onPressed: _submit,

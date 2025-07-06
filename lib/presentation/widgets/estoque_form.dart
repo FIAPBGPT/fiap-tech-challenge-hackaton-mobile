@@ -58,58 +58,142 @@ class _EstoqueFormState extends ConsumerState<EstoqueForm> {
           produtos.when(
             data: (produtosList) => DropdownButtonFormField<String>(
               value: produto.isNotEmpty ? produto : null,
-              decoration: const InputDecoration(labelText: 'Produto'),
+              decoration: const InputDecoration(
+                labelText: 'Produto',
+                labelStyle: TextStyle(color: Colors.white),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               items: produtosList
-                  .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nome)))
+                  .map((p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text(p.nome,
+                            style: const TextStyle(color: Colors.white)),
+                      ))
                   .toList(),
               onChanged: (value) => setState(() => produto = value ?? ''),
               validator: (value) => value == null || value.isEmpty ? 'Selecione um produto' : null,
             ),
             loading: () => const CircularProgressIndicator(),
-            error: (error, _) => const Text('Erro ao carregar produtos'),
+            error: (error, _) => const Text('Erro ao carregar produtos',
+                style: TextStyle(color: Colors.white)),
           ),
           safras.when(
             data: (safrasList) => DropdownButtonFormField<String>(
               value: safra,
-              decoration: const InputDecoration(labelText: 'Safra'),
+              decoration: const InputDecoration(
+                labelText: 'Safra',
+                labelStyle: TextStyle(color: Colors.white),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               items: safrasList
-                  .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
+                  .map((s) => DropdownMenuItem(
+                        value: s.id,
+                        child: Text(s.nome,
+                            style: const TextStyle(color: Colors.white)),
+                      ))
                   .toList(),
               onChanged: (value) => setState(() => safra = value),
             ),
             loading: () => const CircularProgressIndicator(),
-            error: (error, _) => const Text('Erro ao carregar safras'),
+            error: (error, _) => const Text('Erro ao carregar safras',
+                style: TextStyle(color: Colors.white)),
           ),
           fazendas.when(
             data: (fazendasList) => DropdownButtonFormField<String>(
               value: fazenda,
-              decoration: const InputDecoration(labelText: 'Fazenda'),
+              decoration: const InputDecoration(
+                labelText: 'Fazenda',
+                labelStyle: TextStyle(color: Colors.white),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               items: fazendasList
-                  .map((f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
+                  .map((f) => DropdownMenuItem(
+                        value: f.id,
+                        child: Text(f.nome,
+                            style: const TextStyle(color: Colors.white)),
+                      ))
                   .toList(),
               onChanged: (value) => setState(() => fazenda = value),
             ),
             loading: () => const CircularProgressIndicator(),
-            error: (error, _) => const Text('Erro ao carregar fazendas'),
+            error: (error, _) => const Text('Erro ao carregar fazendas',
+                style: TextStyle(color: Colors.white)),
           ),
           TextFormField(
             controller: _qController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Quantidade'),
+            decoration: const InputDecoration(
+              labelText: 'Quantidade',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
             validator: (v) => (v == null || double.tryParse(v) == null) ? 'Informe uma quantidade válida' : null,
           ),
           DropdownButtonFormField<String>(
             value: tipo,
-            decoration: const InputDecoration(labelText: 'Tipo'),
+            decoration: const InputDecoration(
+              labelText: 'Tipo',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            dropdownColor: Colors.white,
+            style: const TextStyle(color: Colors.white),
             items: const [
-              DropdownMenuItem(value: 'entrada', child: Text('Entrada')),
-              DropdownMenuItem(value: 'saida', child: Text('Saída')),
+              DropdownMenuItem(
+                  value: 'entrada',
+                  child:
+                      Text('Entrada', style: TextStyle(color: Colors.white))),
+              DropdownMenuItem(
+                  value: 'saida',
+                  child: Text('Saída', style: TextStyle(color: Colors.white))),
             ],
             onChanged: (value) => setState(() => tipo = value ?? 'entrada'),
           ),
           TextFormField(
             controller: _obsController,
-            decoration: const InputDecoration(labelText: 'Observação'),
+            decoration: const InputDecoration(
+              labelText: 'Observação',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
             maxLines: null,
           ),
           const SizedBox(height: 20),

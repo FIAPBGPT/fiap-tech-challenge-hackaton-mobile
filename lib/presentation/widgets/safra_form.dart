@@ -57,16 +57,41 @@ Widget build(BuildContext context) {
       children: [
         Text(
             widget.existing == null ? 'Nova Safra' : 'Editar Safra',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 16),
         TextField(
           controller: _nomeController,
-          decoration: const InputDecoration(labelText: 'Nome da Safra'),
+            decoration: const InputDecoration(
+              labelText: 'Nome da Safra',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
+            cursorColor: Colors.white,
         ),
         TextField(
           controller: _valorController,
-          decoration: const InputDecoration(labelText: 'Valor'),
+            decoration: const InputDecoration(
+              labelText: 'Valor',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
+            cursorColor: Colors.white,
         ),
         const SizedBox(height: 20),
         ElevatedButton(

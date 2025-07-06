@@ -51,7 +51,6 @@ class _VendaFormState extends ConsumerState<VendaForm> {
 
   Future<void> _consultarSaldo() async {
     if (produtoId != null) {
-      // Consulta saldo atual do estoque para o produto/safra/fazenda selecionados
       double resultado =
           await ref.read(estoqueRepositoryProvider).consultarSaldo(
                 produtoId: produtoId!,
@@ -59,11 +58,8 @@ class _VendaFormState extends ConsumerState<VendaForm> {
                 fazendaId: fazendaId,
               );
 
-      // Se estiver editando uma venda existente, some a quantidade antiga para liberar esse saldo
       if (widget.existing != null && widget.existing!.itens.isNotEmpty) {
         final antigo = widget.existing!.itens.first;
-
-        // Só soma se o produto, safra e fazenda forem os mesmos (ou nulos equivalentes)
         final mesmoProduto = antigo.produtoId == produtoId;
         final mesmaSafra = (antigo.safraId ?? '') == (safraId ?? '');
         final mesmaFazenda = (antigo.fazendaId ?? '') == (fazendaId ?? '');
@@ -78,7 +74,6 @@ class _VendaFormState extends ConsumerState<VendaForm> {
       if (mounted) setState(() => saldo = 0);
     }
   }
-
 
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
@@ -159,125 +154,208 @@ class _VendaFormState extends ConsumerState<VendaForm> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            produtosAsync.when(
-              data: (produtos) {
-                final produtoNome =
-                    produtoId != null ? produtos[produtoId] : null;
-                return DropdownButtonFormField<String>(
-                  value: produtoId,
-                  decoration: const InputDecoration(labelText: 'Produto'),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.existing == null ? 'Nova Venda' : 'Editar Venda',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              produtosAsync.when(
+                data: (produtos) {
+                  final produtoNome =
+                      produtoId != null ? produtos[produtoId] : null;
+                  return DropdownButtonFormField<String>(
+                    value: produtoId,
+                    decoration: const InputDecoration(
+                      labelText: 'Produto',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                    dropdownColor: Colors.white,
+                    items: [
+                      const DropdownMenuItem(
+                          value: null,
+                          child: Text('Selecione',
+                              style: TextStyle(color: Colors.white))),
+                      ...produtos.entries.map((e) =>
+                    DropdownMenuItem(
+                            value: e.key,
+                            child: Text(e.value,
+                                style: const TextStyle(color: Colors.white)),
+                          ))
+                    ],
+                    validator: (v) => v == null ? 'Selecione o produto' : null,
+                    onChanged: isEditing
+                        ? null
+                        : (v) {
+                            setState(() => produtoId = v);
+                            _consultarSaldo();
+                          },
+                  );
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Erro ao carregar produtos: $e',
+                    style: const TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(height: 8),
+              fazendasAsync.when(
+                data: (fazendas) => DropdownButtonFormField<String>(
+                  value: fazendaId,
+                  decoration: const InputDecoration(
+                    labelText: 'Fazenda',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  dropdownColor: Colors.white,
                   items: [
                     const DropdownMenuItem(
-                        value: null, child: Text('Selecione')),
-                    ...produtos.entries.map((e) =>
-                        DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        value: null,
+                        child: Text('Todas',
+                            style: TextStyle(color: Colors.white))),
+                    ...fazendas.map(
+                    (f) => DropdownMenuItem(
+                        value: f.id,
+                        child: Text(f.nome,
+                            style: const TextStyle(color: Colors.white))))
                   ],
-                  validator: (v) => v == null ? 'Selecione o produto' : null,
+                  validator: (v) => v == null ? 'Selecione a fazenda' : null,
                   onChanged: isEditing
                       ? null
                       : (v) {
-                          setState(() => produtoId = v);
+                          setState(() => fazendaId = v);
                           _consultarSaldo();
                         },
-                );
-              },
-              loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Erro ao carregar produtos: $e'),
-            ),
-            const SizedBox(height: 8),
-            fazendasAsync.when(
-              data: (fazendas) => DropdownButtonFormField<String>(
-                value: fazendaId,
-                decoration: const InputDecoration(labelText: 'Fazenda'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Todas')),
-                  ...fazendas.map(
-                      (f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
-                ],
-                validator: (v) => v == null ? 'Selecione a fazenda' : null,
-                onChanged: isEditing
-                    ? null
-                    : (v) {
-                        setState(() => fazendaId = v);
-                        _consultarSaldo();
-                      },
+                ),
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Erro fazendas: $e',
+                    style: const TextStyle(color: Colors.white)),
               ),
-              loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Erro fazendas: $e'),
-            ),
-            const SizedBox(height: 8),
-            safrasAsync.when(
-              data: (safras) => DropdownButtonFormField<String>(
-                value: safraId,
-                decoration: const InputDecoration(labelText: 'Safra'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Todas')),
-                  ...safras.map(
-                      (s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
-                ],
-                validator: (v) => v == null ? 'Selecione a safra' : null,
-                onChanged: isEditing
-                    ? null
-                    : (v) {
-                        setState(() => safraId = v);
-                        _consultarSaldo();
-                      },
+              const SizedBox(height: 8),
+              safrasAsync.when(
+                data: (safras) => DropdownButtonFormField<String>(
+                  value: safraId,
+                  decoration: const InputDecoration(
+                    labelText: 'Safra',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  dropdownColor: Colors.white,
+                  items: [
+                    const DropdownMenuItem(
+                        value: null,
+                        child: Text('Todas',
+                            style: TextStyle(color: Colors.white))),
+                    ...safras.map(
+                    (s) => DropdownMenuItem(
+                        value: s.id,
+                        child: Text(s.nome,
+                            style: const TextStyle(color: Colors.white))))
+                  ],
+                  validator: (v) => v == null ? 'Selecione a safra' : null,
+                  onChanged: isEditing
+                      ? null
+                      : (v) {
+                          setState(() => safraId = v);
+                          _consultarSaldo();
+                        },
+                ),
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Erro safras: $e',
+                    style: const TextStyle(color: Colors.white)),
               ),
-              loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Erro safras: $e'),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue:
-                  quantidade != null ? quantidade!.toStringAsFixed(2) : '',
-              decoration: const InputDecoration(labelText: 'Quantidade'),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final q = double.tryParse(v ?? '');
-                if (q == null || q <= 0) return 'Quantidade inválida';
-                if (q > saldo) return 'Excede o saldo disponível ($saldo)';
-                return null;
-              },
-              onChanged: (v) => setState(() => quantidade = double.tryParse(v)),
-              onSaved: (v) => quantidade = double.tryParse(v ?? ''),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              initialValue: valor != null ? valor!.toStringAsFixed(2) : '',
-              decoration: const InputDecoration(labelText: 'Valor'),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final q = double.tryParse(v ?? '');
-                if (q == null || q <= 0) return 'Valor inválido';
-                return null;
-              },
-              onChanged: (v) => setState(() => valor = double.tryParse(v)),
-              onSaved: (v) => valor = double.tryParse(v ?? ''),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Saldo disponível: ${saldo.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              const SizedBox(height: 8),
+              TextFormField(
+                initialValue:
+                    quantidade != null ? quantidade!.toStringAsFixed(2) : '',
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  final q = double.tryParse(v ?? '');
+                  if (q == null || q <= 0) return 'Quantidade inválida';
+                  if (q > saldo) return 'Excede o saldo disponível ($saldo)';
+                  return null;
+                },
+                onChanged: (v) =>
+                    setState(() => quantidade = double.tryParse(v)),
+                onSaved: (v) => quantidade = double.tryParse(v ?? ''),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: (carregando || !isFormFilled) ? null : _salvar,
-              child: carregando
-                  ? const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(isEditing ? 'Atualizar Venda' : 'Registrar Venda'),
-            )
-          ],
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: valor != null ? valor!.toStringAsFixed(2) : '',
+                decoration: const InputDecoration(
+                  labelText: 'Valor',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  final q = double.tryParse(v ?? '');
+                  if (q == null || q <= 0) return 'Valor inválido';
+                  return null;
+                },
+                onChanged: (v) => setState(() => valor = double.tryParse(v)),
+                onSaved: (v) => valor = double.tryParse(v ?? ''),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Saldo disponível: ${saldo.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: (carregando || !isFormFilled) ? null : _salvar,
+                child: carregando
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(isEditing ? 'Atualizar Venda' : 'Registrar Venda'),
+              )
+            ],
+          ),
         ),
       ),
     );

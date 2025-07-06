@@ -43,46 +43,85 @@ class _ProducaoFormState extends ConsumerState<ProducaoForm> {
       key: _formKey,
       child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(
+            widget.producao == null ? 'Nova Produção' : 'Editar Produção',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: produtoId,
-            hint: const Text('Selecione o produto'),
+            hint: const Text('Selecione o produto',
+                style: TextStyle(color: Colors.white)),
+            dropdownColor: Colors.white,
             items: produtos.value
                     ?.map((p) =>
-                        DropdownMenuItem(value: p.id, child: Text(p.nome)))
+                  DropdownMenuItem(
+                          value: p.id,
+                          child: Text(p.nome,
+                              style: const TextStyle(color: Colors.white)),
+                        ))
                     .toList() ??
                 [],
             onChanged: (v) => setState(() => produtoId = v),
             validator: (v) =>
                 v == null || v.isEmpty ? 'Produto obrigatório' : null,
+            style: const TextStyle(color: Colors.white),
           ),
           DropdownButtonFormField<String>(
             value: safraId,
-            hint: const Text('Selecione a safra'),
+            hint: const Text('Selecione a safra',
+                style: TextStyle(color: Colors.white)),
+            dropdownColor: Colors.white,
             items: safras.value
                     ?.map((s) =>
-                        DropdownMenuItem(value: s.id, child: Text(s.nome)))
+                  DropdownMenuItem(
+                          value: s.id,
+                          child: Text(s.nome,
+                              style: const TextStyle(color: Colors.white)),
+                        ))
                     .toList() ??
                 [],
             onChanged: (v) => setState(() => safraId = v),
             validator: (v) =>
                 v == null || v.isEmpty ? 'Safra obrigatória' : null,
+            style: const TextStyle(color: Colors.white),
           ),
           DropdownButtonFormField<String>(
             value: fazendaId,
-            hint: const Text('Selecione a fazenda'),
+            hint: const Text('Selecione a fazenda',
+                style: TextStyle(color: Colors.white)),
+            dropdownColor: Colors.white,
             items: fazendas.value
                     ?.map((f) =>
-                        DropdownMenuItem(value: f.id, child: Text(f.nome)))
+                  DropdownMenuItem(
+                          value: f.id,
+                          child: Text(f.nome,
+                              style: const TextStyle(color: Colors.white)),
+                        ))
                     .toList() ??
                 [],
             onChanged: (v) => setState(() => fazendaId = v),
             validator: (v) =>
                 v == null || v.isEmpty ? 'Fazenda obrigatória' : null,
+            style: const TextStyle(color: Colors.white),
           ),
           TextFormField(
             controller: _qController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Quantidade'),
+            decoration: const InputDecoration(
+              labelText: 'Quantidade',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
             validator: (v) {
               final q = double.tryParse(v ?? '');
               if (q == null || q <= 0) return 'Informe uma quantidade válida';
