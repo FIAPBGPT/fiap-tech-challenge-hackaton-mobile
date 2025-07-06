@@ -61,82 +61,155 @@ class _MetaFormState extends ConsumerState<MetaForm> {
           key: _formKey,
           child: Column(children: [
                   Text(
-            widget.existingMeta == null ? 'Nova Meta' : 'Editar Meta',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
+              widget.existingMeta == null ? 'Nova Meta' : 'Editar Meta',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 16),
             produtosAsync.when(
               data: (produtos) {
-                if (produto != null && !produtos.any((p) => p.id == produto)) produto = null;
+                if (produto != null && !produtos.any((p) => p.id == produto))
+                  produto = null;
                 return DropdownButtonFormField<String>(
                   value: produto,
+                  dropdownColor: Colors.white,
                   items: produtos
-                      .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nome)))
+                      .map((p) => DropdownMenuItem(
+                          value: p.id,
+                          child: Text(
+                            p.nome,
+                            style: const TextStyle(color: Colors.black),
+                          )))
                       .toList(),
                   onChanged: (v) => setState(() => produto = v),
-                  decoration: const InputDecoration(labelText: 'Produto'),
-                  validator: (v) => v == null || v.isEmpty ? 'Selecione um produto' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Produto',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Selecione um produto' : null,
+                  style: const TextStyle(color: Colors.white),
+                  iconEnabledColor: Colors.white,
                 );
               },
               loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro produtos: $e'),
+              error: (e, _) => Text('Erro produtos: $e',
+                  style: const TextStyle(color: Colors.white)),
             ),
-
             safraAsync.when(
               data: (safras) {
-                if (safra != null && !safras.any((s) => s.id == safra)) safra = null;
+                if (safra != null && !safras.any((s) => s.id == safra))
+                  safra = null;
                 return DropdownButtonFormField<String>(
                   value: safra,
+                  dropdownColor: Colors.white,
                   items: safras
-                      .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nome)))
+                      .map((s) => DropdownMenuItem(
+                          value: s.id,
+                          child: Text(
+                            s.nome,
+                            style: const TextStyle(color: Colors.white),
+                          )))
                       .toList(),
                   onChanged: (v) => setState(() => safra = v),
-                  decoration: const InputDecoration(labelText: 'Safra'),
-                  validator: (v) => v == null || v.isEmpty ? 'Selecione uma safra' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Safra',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Selecione uma safra' : null,
+                  style: const TextStyle(color: Colors.white),
+                  iconEnabledColor: Colors.white,
                 );
               },
               loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro safras: $e'),
+              error: (e, _) => Text('Erro safras: $e',
+                  style: const TextStyle(color: Colors.white)),
             ),
-
             fazendaAsync.when(
               data: (fazendas) {
-                if (fazenda != null && !fazendas.any((f) => f.id == fazenda)) fazenda = null;
+                if (fazenda != null && !fazendas.any((f) => f.id == fazenda))
+                  fazenda = null;
                 return DropdownButtonFormField<String>(
                   value: fazenda,
+                  dropdownColor: Colors.white,
                   items: fazendas
-                      .map((f) => DropdownMenuItem(value: f.id, child: Text(f.nome)))
+                      .map((f) => DropdownMenuItem(
+                          value: f.id,
+                          child: Text(
+                            f.nome,
+                            style: const TextStyle(color: Colors.white),
+                          )))
                       .toList(),
                   onChanged: (v) => setState(() => fazenda = v),
-                  decoration: const InputDecoration(labelText: 'Fazenda'),
-                  validator: (v) => v == null || v.isEmpty ? 'Selecione uma fazenda' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Fazenda',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Selecione uma fazenda' : null,
+                  style: const TextStyle(color: Colors.white),
+                  iconEnabledColor: Colors.white,
                 );
               },
               loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro fazendas: $e'),
+              error: (e, _) => Text('Erro fazendas: $e',
+                  style: const TextStyle(color: Colors.white)),
             ),
-
             TextFormField(
               initialValue: valorStr,
-              decoration: const InputDecoration(labelText: 'Valor da Meta'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Valor da Meta',
+                labelStyle: TextStyle(color: Colors.white),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               validator: (v) {
                 final val = double.tryParse(v ?? '');
                 if (val == null || val <= 0) return 'Informe um valor válido';
                 return null;
               },
               onSaved: (v) => valorStr = v!.trim(),
+              style: const TextStyle(color: Colors.white),
             ),
-
-           DropdownButtonFormField<String>(
-  value: tipo,
-  decoration: const InputDecoration(labelText: 'Tipo de Meta'),
-  items: const [
-    DropdownMenuItem(value: 'producao', child: Text('Produção')),
-    DropdownMenuItem(value: 'vendas', child: Text('Venda')),  
-  ],
-  onChanged: (v) => setState(() => tipo = v ?? 'producao'),
-),
+            DropdownButtonFormField<String>(
+              value: tipo,
+              decoration: const InputDecoration(
+                labelText: 'Tipo de Meta',
+                labelStyle: TextStyle(color: Colors.white),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              dropdownColor: Colors.white,
+              items: const [
+                DropdownMenuItem(
+                    value: 'producao',
+                    child: Text('Produção',
+                        style: TextStyle(color: Colors.white))),
+                DropdownMenuItem(
+                    value: 'vendas',
+                    child:
+                        Text('Venda', style: TextStyle(color: Colors.white))),
+              ],
+              onChanged: (v) => setState(() => tipo = v ?? 'producao'),
+              style: const TextStyle(color: Colors.white),
+              iconEnabledColor: Colors.white,
+            ),
 
 
             const SizedBox(height: 24),

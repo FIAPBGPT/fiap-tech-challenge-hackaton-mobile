@@ -1,4 +1,4 @@
-import 'package:fiap_farms_app/presentation/widgets/generic_table.dart';
+import 'package:fiap_farms_app/presentation/widgets/generic_table/generic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +23,6 @@ class _MetaPageState extends ConsumerState<MetaPage> {
   @override
   void initState() {
     super.initState();
-    // 👉 Força orientação paisagem ao entrar
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
@@ -32,7 +31,6 @@ class _MetaPageState extends ConsumerState<MetaPage> {
 
   @override
   void dispose() {
-    // 👉 Restaura orientação retrato ao sair
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -51,7 +49,7 @@ class _MetaPageState extends ConsumerState<MetaPage> {
         ),
         child: Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xFF59734A),
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -79,16 +77,54 @@ class _MetaPageState extends ConsumerState<MetaPage> {
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Metas')),
+        appBar: AppBar(
+          title: const Text(
+            'Metas',
+            style: TextStyle(
+              color: Color(0xFF97133E),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: const Color(0xFFF1EBD9),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Color.fromARGB(255, 245, 232, 188),
+                  Color(0xFFF2EDDD),
+                ],
+              ),
+            ),
+          ),
+        ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _abrirForm(ctx),
-        child: const Icon(Icons.add),
+          child: const Icon(Icons.add, color: Colors.white),
+          backgroundColor: const Color(0xFF59734A),
       ),
-      body: metasAsync.when(
+        body: Stack(
+          children: [
+            // Gradient background
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF2EDDD),
+                    Color(0xFFE2C772),
+                  ],
+                ),
+              ),
+            ),
+            metasAsync.when(
         data: (metas) {
           if (metas.isEmpty) {
             return const Center(child: Text('Nenhuma meta cadastrada.'));
           }
+
           return produtosAsync.when(
             data: (prods) => safraAsync.when(
               data: (safras) => fazendaAsync.when(
@@ -96,7 +132,9 @@ class _MetaPageState extends ConsumerState<MetaPage> {
                   final metasComDados = metas.map((meta) {
                     final prodNome = prods.firstWhere(
                       (p) => p.id == meta.produto,
-                      orElse: () => Product(id: meta.produto, nome: 'Prod. não encontrado'),
+                                orElse: () => Product(
+                                    id: meta.produto,
+                                    nome: 'Produto não encontrado'),
                     ).nome;
 
                     final safraNome = safras.firstWhere(
@@ -120,28 +158,45 @@ class _MetaPageState extends ConsumerState<MetaPage> {
                     };
                   }).toList();
 
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: CustomPaginatedTable<Map<String, dynamic>>(
-                      columns: const [
-                        'Tipo',
-                        'Produto',
-                        'Meta',
-                        'Safra',
-                        'Fazenda'
-                      ],
-                      data: metasComDados,
-                      buildCells: (item) => [
-                        DataCell(Text(item['tipo'])),
-                        DataCell(Text(item['produto'])),
-                        DataCell(Text(item['valor'].toString())),
-                        DataCell(Text(item['safra'])),
-                        DataCell(Text(item['fazenda'])),
-                      ],
-                      onEdit: (item) => _abrirForm(ctx, meta: item['meta']),
-                      onDelete: (item) async =>
-                          await repo.deleteMeta(item['meta'].id),
-                    ),
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              padding: const EdgeInsets.all(16),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                    minHeight: constraints.maxHeight),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: constraints.maxWidth,
+                                    child: CustomPaginatedTable<
+                                        Map<String, dynamic>>(
+                                      columns: const [
+                                        'Tipo',
+                                        'Produto',
+                                        'Meta',
+                                        'Safra',
+                                        'Fazenda'
+                                      ],
+                                      data: metasComDados,
+                                      buildCells: (item) => [
+                                        DataCell(Text(item['tipo'])),
+                                        DataCell(Text(item['produto'])),
+                                        DataCell(
+                                            Text(item['valor'].toString())),
+                                        DataCell(Text(item['safra'])),
+                                        DataCell(Text(item['fazenda'])),
+                                      ],
+                                      onEdit: (item) =>
+                                          _abrirForm(ctx, meta: item['meta']),
+                                      onDelete: (item) async => await repo
+                                          .deleteMeta(item['meta'].id),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -157,6 +212,8 @@ class _MetaPageState extends ConsumerState<MetaPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro metas: $e')),
       ),
+          ],
+        ) 
     );
   }
 }

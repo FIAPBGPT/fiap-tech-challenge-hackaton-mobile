@@ -1,11 +1,13 @@
+import 'package:fiap_farms_app/presentation/widgets/generic_table/generic_table.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fiap_farms_app/core/providers/fazenda_provider.dart';
 import 'package:fiap_farms_app/core/providers/producao_provider.dart';
 import 'package:fiap_farms_app/core/providers/product_provider.dart';
 import 'package:fiap_farms_app/core/providers/safra_provider.dart';
 import 'package:fiap_farms_app/domain/entities/producao.dart';
 import 'package:fiap_farms_app/presentation/widgets/producao_form.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProducaoPage extends ConsumerStatefulWidget {
   const ProducaoPage({Key? key}) : super(key: key);
@@ -15,10 +17,25 @@ class ProducaoPage extends ConsumerStatefulWidget {
 }
 
 class _ProducaoPageState extends ConsumerState<ProducaoPage> {
-  Producao? producaoEditando;
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
+  }
 
   void _abrirForm([Producao? p]) {
-    setState(() => producaoEditando = p);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -27,12 +44,12 @@ class _ProducaoPageState extends ConsumerState<ProducaoPage> {
         padding:
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: const BoxDecoration(
+            color: Color(0xFF59734A),
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          padding: EdgeInsets.all(16),
-          child: ProducaoForm(producao: p), // <-- Envia a produção para edição
+          padding: const EdgeInsets.all(16),
+          child: ProducaoForm(producao: p),
         ),
       ),
     );
@@ -79,8 +96,49 @@ class _ProducaoPageState extends ConsumerState<ProducaoPage> {
     final safraMapAsync = ref.watch(safraMapProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Produção')),
-      body: producoesAsync.when(
+        appBar: AppBar(
+          title: const Text(
+            'Produção',
+            style: TextStyle(
+              color: Color(0xFF97133E),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: const Color(0xFFF1EBD9),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Color.fromARGB(255, 245, 232, 188),
+                  Color(0xFFF2EDDD),
+                ],
+              ),
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _abrirForm(),
+          child: const Icon(Icons.add, color: Colors.white),
+          backgroundColor: const Color(0xFF59734A),
+        ),
+        body: Stack(
+          children: [
+            // Gradient background
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF2EDDD),
+                    Color(0xFFE2C772),
+                  ],
+                ),
+              ),
+            ),
+            producoesAsync.when(
         data: (producoes) {
           return fazendaMapAsync.when(
             data: (fazendaMap) {
@@ -92,40 +150,59 @@ class _ProducaoPageState extends ConsumerState<ProducaoPage> {
                         return const Center(
                             child: Text('Nenhuma produção cadastrada.'));
                       }
-                      return ListView.builder(
-                        itemCount: producoes.length,
-                        itemBuilder: (context, index) {
-                          final p = producoes[index];
-                          final fazendaNome =
-                              fazendaMap[p.fazenda] ?? p.fazenda ?? 'N/A';
-                          final produtoNome =
-                              produtoMap[p.produto] ?? p.produto;
-                          final safraNome =
-                              safraMap[p.safra] ?? p.safra ?? 'N/A';
-                          return ListTile(
-                            title: Text(produtoNome),
-                            subtitle: Text(
-                              'Qtd: ${p.quantidade} | Safra: $safraNome | Fazenda: $fazendaNome\n'
-                              'Data: ${p.data.toLocal().toString().split(' ')[0]}',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.blue),
-                                  tooltip: 'Editar',
-                                  onPressed: () => _abrirForm(p),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  tooltip: 'Excluir',
-                                  onPressed: () => _excluir(p),
-                                ),
-                              ],
-                            ),
 
+                            final producaoDados = producoes.map((p) {
+                              return {
+                                'producao': p,
+                                'produto':
+                                    produtoMap[p.produto] ?? p.produto ?? 'N/A',
+                                'quantidade': p.quantidade,
+                                'safra': safraMap[p.safra] ?? p.safra ?? 'N/A',
+                                'fazenda':
+                                    fazendaMap[p.fazenda] ?? p.fazenda ?? 'N/A',
+                                'data': p.data != null
+                                    ? p.data!.toLocal().toString().split(' ')[0]
+                                    : 'N/A',
+                              };
+                            }).toList();
+
+                            return LayoutBuilder(
+                              builder: (context, constraints) {
+                                return SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                        minHeight: constraints.maxHeight),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: SizedBox(
+                                        width: constraints.maxWidth,
+                                        child: CustomPaginatedTable<
+                                            Map<String, dynamic>>(
+                                          columns: const [
+                                            'Produto',
+                                            'Quantidade',
+                                            'Safra',
+                                            'Fazenda',
+                                            'Data'
+                                          ],
+                                          data: producaoDados,
+                                          buildCells: (item) => [
+                                            DataCell(Text(item['produto'])),
+                                            DataCell(
+                                                Text('${item['quantidade']}')),
+                                            DataCell(Text(item['safra'])),
+                                            DataCell(Text(item['fazenda'])),
+                                            DataCell(Text(item['data'])),
+                                          ],
+                                          onEdit: (item) =>
+                                              _abrirForm(item['producao']),
+                                          onDelete: (item) =>
+                                              _excluir(item['producao']),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                           );
                         },
                       );
@@ -148,11 +225,8 @@ class _ProducaoPageState extends ConsumerState<ProducaoPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirForm(),
-        child: const Icon(Icons.add),
-        tooltip: 'Adicionar Produção',
-      ),
+          ],
+        )
     );
   }
 }

@@ -13,9 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'product_page.dart';
 import 'home_sections.dart';
 
-// Adicione os imports das demais páginas depois
-// import 'estoque_page.dart'; ...
-
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -72,7 +69,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('FIAP Farms • ${currentSection.name.toUpperCase()}'),
+        iconTheme: const IconThemeData(
+            color: Colors.white), // Set hamburger icon color to white
+        title: Text(
+          'FIAP Farms • ${currentSection.name.toUpperCase()}',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF97133E),
       ),
       drawer: MainMenu(
         userName: _userName(),

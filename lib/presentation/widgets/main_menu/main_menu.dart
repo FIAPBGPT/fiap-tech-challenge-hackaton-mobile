@@ -61,7 +61,7 @@ class MainMenu extends StatelessWidget {
             color: Color(0xFFDDCCBB),
           ),
           MainMenuItem(
-            label: 'Fechar',
+            label: 'Logout',
             action: () => logoutHandler(),
           ),
         ],

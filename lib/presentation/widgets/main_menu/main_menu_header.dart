@@ -18,7 +18,7 @@ class MainMenuHeader extends StatelessWidget {
         children: [
           Icon(
             Icons.person_outlined,
-            size: 60,
+            size: 35,
             color: Colors.white,
           ),
           Text(

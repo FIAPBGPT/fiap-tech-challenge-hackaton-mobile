@@ -68,31 +68,69 @@ class _ProductFormState extends ConsumerState<ProductForm> {
         children: [
           Text(
             widget.existing != null ? 'Editar Produto' : 'Novo Produto',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 16),
 
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nome do Produto'),
+            decoration: const InputDecoration(
+              labelText: 'Nome do Produto',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 12),
 
           DropdownButtonFormField<String>(
             value: selectedCategory,
-            hint: const Text("Selecione a categoria"),
+            hint: const Text("Selecione a categoria",
+                style: TextStyle(color: Colors.white)),
             items: categorias.map((c) {
-              return DropdownMenuItem(value: c, child: Text(c));
+              return DropdownMenuItem(
+                value: c,
+                child: Text(c, style: const TextStyle(color: Colors.white)),
+              );
             }).toList(),
             onChanged: (value) => setState(() => selectedCategory = value),
-            decoration: const InputDecoration(labelText: "Categoria"),
+            decoration: const InputDecoration(
+              labelText: "Categoria",
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            dropdownColor: Colors.white,
+            style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 12),
 
           TextField(
             controller: _priceController,
-            decoration: const InputDecoration(labelText: 'Preço'),
+            decoration: const InputDecoration(
+              labelText: 'Preço',
+              labelStyle: TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
             keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 12),
 
@@ -101,8 +139,11 @@ class _ProductFormState extends ConsumerState<ProductForm> {
               Checkbox(
                 value: isActive,
                 onChanged: (val) => setState(() => isActive = val ?? true),
+                checkColor: Colors.white,
+                fillColor: MaterialStateProperty.all(Colors.white),
               ),
-              const Text("Produto ativo"),
+              const Text("Produto ativo",
+                  style: TextStyle(color: Colors.white)),
             ],
           ),
           const SizedBox(height: 16),
