@@ -60,12 +60,12 @@ class _MetaFormState extends ConsumerState<MetaForm> {
         child: Form(
           key: _formKey,
           child: Column(children: [
-                  Text(
+            Text(
               widget.existingMeta == null ? 'Nova Meta' : 'Editar Meta',
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
-                  ?.copyWith(color: Colors.white),
+                  ?.copyWith(color: Colors.black),
             ),
             const SizedBox(height: 16),
             produtosAsync.when(
@@ -86,20 +86,20 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                   onChanged: (v) => setState(() => produto = v),
                   decoration: const InputDecoration(
                     labelText: 'Produto',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: TextStyle(color: Colors.black),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: BorderSide(color: Colors.black),
                     ),
                   ),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Selecione um produto' : null,
-                  style: const TextStyle(color: Colors.white),
-                  iconEnabledColor: Colors.white,
+                  style: const TextStyle(color: Colors.black),
+                  iconEnabledColor: Colors.black,
                 );
               },
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('Erro produtos: $e',
-                  style: const TextStyle(color: Colors.white)),
+                  style: const TextStyle(color: Colors.black)),
             ),
             safraAsync.when(
               data: (safras) {
@@ -113,26 +113,26 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                           value: s.id,
                           child: Text(
                             s.nome,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.black),
                           )))
                       .toList(),
                   onChanged: (v) => setState(() => safra = v),
                   decoration: const InputDecoration(
                     labelText: 'Safra',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: TextStyle(color: Colors.black),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: BorderSide(color: Colors.black),
                     ),
                   ),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Selecione uma safra' : null,
-                  style: const TextStyle(color: Colors.white),
-                  iconEnabledColor: Colors.white,
+                  style: const TextStyle(color: Colors.black),
+                  iconEnabledColor: Colors.black,
                 );
               },
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('Erro safras: $e',
-                  style: const TextStyle(color: Colors.white)),
+                  style: const TextStyle(color: Colors.black)),
             ),
             fazendaAsync.when(
               data: (fazendas) {
@@ -146,34 +146,34 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                           value: f.id,
                           child: Text(
                             f.nome,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.black),
                           )))
                       .toList(),
                   onChanged: (v) => setState(() => fazenda = v),
                   decoration: const InputDecoration(
                     labelText: 'Fazenda',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: TextStyle(color: Colors.black),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: BorderSide(color: Colors.black),
                     ),
                   ),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Selecione uma fazenda' : null,
-                  style: const TextStyle(color: Colors.white),
-                  iconEnabledColor: Colors.white,
+                  style: const TextStyle(color: Colors.black),
+                  iconEnabledColor: Colors.black,
                 );
               },
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('Erro fazendas: $e',
-                  style: const TextStyle(color: Colors.white)),
+                  style: const TextStyle(color: Colors.black)),
             ),
             TextFormField(
               initialValue: valorStr,
               decoration: const InputDecoration(
                 labelText: 'Valor da Meta',
-                labelStyle: TextStyle(color: Colors.white),
+                labelStyle: TextStyle(color: Colors.black),
                 enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+                  borderSide: BorderSide(color: Colors.black),
                 ),
               ),
               keyboardType:
@@ -184,15 +184,15 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                 return null;
               },
               onSaved: (v) => valorStr = v!.trim(),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.black),
             ),
             DropdownButtonFormField<String>(
               value: tipo,
               decoration: const InputDecoration(
                 labelText: 'Tipo de Meta',
-                labelStyle: TextStyle(color: Colors.white),
+                labelStyle: TextStyle(color: Colors.black),
                 enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+                  borderSide: BorderSide(color: Colors.black),
                 ),
               ),
               dropdownColor: Colors.white,
@@ -200,18 +200,16 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                 DropdownMenuItem(
                     value: 'producao',
                     child: Text('Produção',
-                        style: TextStyle(color: Colors.white))),
+                        style: TextStyle(color: Colors.black))),
                 DropdownMenuItem(
                     value: 'vendas',
                     child:
-                        Text('Venda', style: TextStyle(color: Colors.white))),
+                        Text('Venda', style: TextStyle(color: Colors.black))),
               ],
               onChanged: (v) => setState(() => tipo = v ?? 'producao'),
-              style: const TextStyle(color: Colors.white),
-              iconEnabledColor: Colors.white,
+              style: const TextStyle(color: Colors.black),
+              iconEnabledColor: Colors.black,
             ),
-
-
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () async {
@@ -248,7 +246,8 @@ class _MetaFormState extends ConsumerState<MetaForm> {
                   );
                 }
               },
-              child: Text(widget.existingMeta == null ? 'Cadastrar' : 'Atualizar'),
+              child:
+                  Text(widget.existingMeta == null ? 'Cadastrar' : 'Atualizar'),
             ),
           ]),
         ),
