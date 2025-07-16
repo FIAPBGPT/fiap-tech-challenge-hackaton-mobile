@@ -23,7 +23,8 @@ class _PercentageRingState extends State<PercentageRing> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(6),
+      padding: EdgeInsets.all(0),
+      margin: EdgeInsets.all(0),
       child: SimpleCircularProgressBar(
         valueNotifier: valueNotifier,
         progressColors: [
