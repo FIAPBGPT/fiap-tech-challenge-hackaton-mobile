@@ -1,4 +1,3 @@
-import 'package:fiap_farms_app/presentation/widgets/locations_widget/percentage_ring.dart';
 import 'package:flutter/material.dart';
 
 class ProductQuantity extends StatelessWidget {
