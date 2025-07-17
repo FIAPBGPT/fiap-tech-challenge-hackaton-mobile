@@ -29,48 +29,54 @@ class _LocationsWidgetState extends ConsumerState<LocationsWidget> {
   void initState() {
     super.initState();
 
-    setState(() {
-      loadProducts();
-    });
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    await loadProducts();
+    await loadFazendas();
+    await buildFazendasByProduct();
   }
 
   Future<void> loadProducts() async {
     final asyncProducts = ref.read(productRepositoryProvider);
     List<Product> data = await asyncProducts.getAllProducts();
 
-    products = data;
-
-    loadFazendas();
+    setState(() {
+      products = data;
+    });
   }
 
   Future<void> loadFazendas() async {
     final asyncFarms = ref.read(fazendaRepositoryProvider);
     List<Fazenda> data = await asyncFarms.getAll();
 
-    fazendas = data;
-    fazendasQuantity = fazendas.length;
-
-    buildFazendasByProduct();
+    setState(() {
+      fazendas = data;
+      fazendasQuantity = fazendas.length;
+    });
   }
 
   Future<void> buildFazendasByProduct() async {
     final asyncProducoes = ref.read(producaoRepositoryProvider);
     List<Producao> data = await asyncProducoes.getAll();
 
-    data.forEach((producao) {
-      Fazenda fazenda;
-      Product product;
+    setState(() {
+      data.forEach((producao) {
+        Fazenda fazenda;
+        Product product;
 
-      product = products.firstWhere((p) => p.id == producao.produto);
-      fazenda = fazendas.firstWhere((f) => f.id == producao.fazenda);
+        product = products.firstWhere((p) => p.id == producao.produto);
+        fazenda = fazendas.firstWhere((f) => f.id == producao.fazenda);
 
-      if (product != null && fazenda != null) {
-        fazendasByProduct[product.nome] ??= [];
+        if (product != null && fazenda != null) {
+          fazendasByProduct[product.nome] ??= [];
 
-        if (!fazendasByProduct[product.nome]!.contains(fazenda.id)) {
-          fazendasByProduct[product.nome]!.add(fazenda.id);
+          if (!fazendasByProduct[product.nome]!.contains(fazenda.id)) {
+            fazendasByProduct[product.nome]!.add(fazenda.id);
+          }
         }
-      }
+      });
     });
   }
 
@@ -105,6 +111,14 @@ class _LocationsWidgetState extends ConsumerState<LocationsWidget> {
       'SP': 'São Paulo',
       'TO': 'Tocantins',
     };
+
+    if (fazendasByProduct.isEmpty)
+      return Center(
+        child: CircularProgressIndicator(
+          padding: EdgeInsets.all(30),
+          color: Color(0xFF97133E),
+        ),
+      );
 
     return HomeCard(
       title: 'Localidades',
