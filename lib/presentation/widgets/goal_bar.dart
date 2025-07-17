@@ -20,6 +20,8 @@ class GoalBar extends StatelessWidget {
   final numberFormatter = NumberFormat.decimalPatternDigits(locale: 'pt-BR');
 
   int _percentage() {
+    if (actualValue >= goalValue) return 100;
+
     return ((actualValue / goalValue) * 100).toInt();
   }
 
@@ -50,7 +52,7 @@ class GoalBar extends StatelessWidget {
           padding: 0,
           selectedColor: Color(0xFF97133E),
           unselectedColor: Color(0xFFC9BCC7),
-          roundedEdges: Radius.circular(10),
+          roundedEdges: Radius.circular(0),
         ),
       ],
     );
