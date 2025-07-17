@@ -81,7 +81,13 @@ class _GoalsWidgetState extends ConsumerState<GoalsWidget> {
     TextStyle titlesStyle = TextStyle(
         color: Color(0xFF97133E), fontWeight: FontWeight.bold, fontSize: 18);
 
-    if (producaoMeta == 0 || vendaMeta == 0) return Text('Carregando...');
+    if (producaoMeta == 0 || vendaMeta == 0)
+      return Center(
+        child: CircularProgressIndicator(
+          padding: EdgeInsets.all(30),
+          color: Color(0xFF97133E),
+        ),
+      );
 
     return HomeCard(
       title: 'Metas',
