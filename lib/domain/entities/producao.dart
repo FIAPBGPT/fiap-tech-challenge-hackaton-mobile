@@ -41,6 +41,8 @@ class Producao {
       data = dataRaw.toDate();
     } else if (dataRaw is DateTime) {
       data = dataRaw;
+    } else if (dataRaw is String) {
+      data = DateTime.parse(dataRaw);
     } else {
       throw Exception('Campo data inválido no documento $id');
     }
@@ -56,8 +58,6 @@ class Producao {
       uid: m['uid'] as String? ?? '',
     );
   }
-
-
 
   Producao copyWith({
     String? id,
