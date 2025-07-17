@@ -1,3 +1,5 @@
+import 'package:fiap_farms_app/presentation/widgets/goals_widget.dart';
+import 'package:fiap_farms_app/presentation/widgets/locations_widget.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -5,19 +7,15 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.dashboard, size: 64, color: Colors.green),
-          SizedBox(height: 20),
-          Text(
-            'Dashboard FIAP Farms',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Text('Resumo de vendas, produção e metas.'),
-        ],
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          children: [
+            LocationsWidget(),
+            GoalsWidget(),
+          ],
+        ),
       ),
     );
   }
