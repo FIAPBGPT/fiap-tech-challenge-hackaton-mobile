@@ -33,18 +33,28 @@ class FazendaRepositoryImpl implements FazendaRepository {
   }
 
   @override
+  Future<List<Fazenda>> getAll() async {
+    final snapshot = await firestore.collection('fazendas').get();
+
+    return snapshot.docs.map(_buildFazenda).toList();
+  }
+
+  @override
   Stream<List<Fazenda>> watchAllFazendas() {
     return firestore.collection('fazendas').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Fazenda(
-          id: doc.id,
-          nome: data['nome'],
-          estado: data['estado'],
-          latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
-longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
-        );
-      }).toList();
+      return snapshot.docs.map(_buildFazenda).toList();
     });
+  }
+
+  Fazenda _buildFazenda(dynamic doc) {
+    final data = doc.data();
+
+    return Fazenda(
+      id: doc.id,
+      nome: data['nome'],
+      estado: data['estado'],
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 }

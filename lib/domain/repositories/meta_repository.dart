@@ -9,8 +9,9 @@ class MetaRepository {
 
   Stream<List<Meta>> watchAllMetas() {
     return _metasRef.snapshots().map(
-      (snapshot) => snapshot.docs.map((doc) => Meta.fromFirestore(doc)).toList(),
-    );
+          (snapshot) =>
+              snapshot.docs.map((doc) => Meta.fromFirestore(doc)).toList(),
+        );
   }
 
   Future<void> addMeta(Meta meta) async {
@@ -23,5 +24,9 @@ class MetaRepository {
 
   Future<void> deleteMeta(String id) async {
     await _metasRef.doc(id).delete();
+  }
+
+  Future<List<Meta>> getAll() {
+    throw UnimplementedError();
   }
 }

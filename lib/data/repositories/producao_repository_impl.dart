@@ -11,7 +11,7 @@ class ProducaoRepositoryImpl implements ProducaoRepository {
   ProducaoRepositoryImpl(this.firestore, this.estoqueRepo);
 
   @override
-@override
+  @override
   Future<void> addProducao(Producao p) async {
     final docRef = firestore.collection('producoes').doc();
     await docRef.set(p.toMap(docRef.id));
@@ -21,7 +21,6 @@ class ProducaoRepositoryImpl implements ProducaoRepository {
     print(
         'Registro de entrada no estoque criado para produção: ${docRef.id}'); // DEBUG
   }
-
 
   Future<void> updateProducao(Producao antiga, Producao atualizada) async {
     // Atualiza o documento da produção
@@ -52,9 +51,16 @@ class ProducaoRepositoryImpl implements ProducaoRepository {
 
       await docRef.set(movimentacao.toMap());
     }
-}
+  }
 
+  @override
+  Future<List<Producao>> getAll() async {
+    final snapshot = await firestore.collection('producoes').get();
 
+    return snapshot.docs.map((doc) {
+      return Producao.fromMap(doc.data(), doc.id);
+    }).toList();
+  }
 
   @override
   Future<void> deleteProducao(Producao p) async {

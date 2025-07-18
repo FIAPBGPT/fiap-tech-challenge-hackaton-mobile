@@ -39,7 +39,7 @@ class HomeCard extends StatelessWidget {
             ),
           ),
           Container(
-            padding: EdgeInsets.all(9),
+            padding: EdgeInsets.all(15),
             child: child,
           )
         ],

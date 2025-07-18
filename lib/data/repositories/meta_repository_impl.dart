@@ -31,7 +31,13 @@ class MetaRepositoryImpl implements MetaRepository {
   @override
   Stream<List<Meta>> watchAllMetas() {
     return _metasRef.snapshots().map(
-      (snapshot) => snapshot.docs.map(_fromDoc).toList(),
-    );
+          (snapshot) => snapshot.docs.map(_fromDoc).toList(),
+        );
+  }
+
+  Future<List<Meta>> getAll() async {
+    final snapshot = await firestore.collection('metas').get();
+
+    return snapshot.docs.map(_fromDoc).toList();
   }
 }

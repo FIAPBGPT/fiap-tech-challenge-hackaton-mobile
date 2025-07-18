@@ -24,9 +24,8 @@ class VendaRepositoryImpl implements VendaRepository {
     }
 
     final docRef = firestore.collection('vendas').doc();
-await docRef.set(venda.copyWith(id: docRef.id).toMap());
+    await docRef.set(venda.copyWith(id: docRef.id).toMap());
     await estoqueRepo.registrarVendaEstoque(venda.copyWith(id: docRef.id));
-
   }
 
   @override
@@ -36,7 +35,7 @@ await docRef.set(venda.copyWith(id: docRef.id).toMap());
   }
 
   @override
-Future<void> updateVenda(Venda vendaNova) async {
+  Future<void> updateVenda(Venda vendaNova) async {
     final docRef = firestore.collection('vendas').doc(vendaNova.id);
     final doc = await docRef.get();
 
@@ -87,6 +86,14 @@ Future<void> updateVenda(Venda vendaNova) async {
     await estoqueRepo.registrarVendaEstoque(vendaNova);
   }
 
+  @override
+  Future<List<Venda>> getAll() async {
+    final snapshot = await firestore.collection('vendas').get();
+
+    return snapshot.docs
+        .map((doc) => Venda.fromMap(doc.data(), doc.id))
+        .toList();
+  }
 
   @override
   Stream<List<Venda>> watchAllVendas() {
