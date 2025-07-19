@@ -11,6 +11,11 @@ class Venda {
     required this.data,
   });
 
+  // Getter para calcular o total da venda
+  double get total {
+    return itens.fold(0.0, (sum, item) => sum + (item.valor * item.quantidade));
+  }
+
   Map<String, dynamic> toMap([String? forcedId]) {
     return {
       'data': Timestamp.fromDate(data),

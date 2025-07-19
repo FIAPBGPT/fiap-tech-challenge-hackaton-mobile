@@ -15,3 +15,22 @@ final vendaListStreamProvider = StreamProvider.autoDispose<List<Venda>>((ref) {
   final repo = ref.watch(vendaRepositoryProvider);
   return repo.watchAllVendas();
 });
+
+Map<String, double> totalVendasPorFazenda(List<Venda> vendas) {
+  final Map<String, double> totalPorFazenda = {};
+
+  for (final venda in vendas) {
+    for (final item in venda.itens) {
+      final fazenda = item.fazendaId ?? 'sem_fazenda';
+      final totalItem = item.valor * item.quantidade;
+
+      totalPorFazenda.update(
+        fazenda,
+        (valorAtual) => valorAtual + totalItem,
+        ifAbsent: () => totalItem,
+      );
+    }
+  }
+
+  return totalPorFazenda;
+}
