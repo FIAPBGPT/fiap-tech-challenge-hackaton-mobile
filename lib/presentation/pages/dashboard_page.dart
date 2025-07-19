@@ -1,5 +1,6 @@
 import 'package:fiap_farms_app/presentation/widgets/goals_widget.dart';
 import 'package:fiap_farms_app/presentation/widgets/locations_widget.dart';
+import 'package:fiap_farms_app/presentation/widgets/sales_widget.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -13,6 +14,7 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           children: [
             LocationsWidget(),
+            SalesWidget(),
             GoalsWidget(),
           ],
         ),
